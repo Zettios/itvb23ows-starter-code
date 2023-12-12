@@ -1,0 +1,24 @@
+version: "3"
+services:
+    db:
+      build: ./db/
+      container_name: hive-db
+      restart: always
+      volumes:
+        - hive-db:/var/lib/mysql
+      environment:
+        MYSQL_ALLOW_EMPTY_PASSWORD: yes
+        MYSQL_DATABASE: "hive"
+      ports:
+        - '3306:3306'
+
+    app:
+        build: ./app/
+        container_name: hive
+        ports:
+          - "8000:80"
+        depends_on:
+          - db
+
+volumes:
+  hive-db:
