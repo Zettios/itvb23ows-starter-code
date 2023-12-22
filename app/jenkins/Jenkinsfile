@@ -1,12 +1,10 @@
 /* Requires the Docker Pipeline plugin */
 pipeline {
-    agent {
-        docker { image 'php:8.2-apache' } 
-    }
+    agent any
     stages {
         stage('build') {
             steps {
-                sh 'echo "Test"'
+                sh 'php --version'
             }
         }
     }
