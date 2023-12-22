@@ -1,7 +1,7 @@
 version: "3"
 services:
     db:
-      build: ./db/
+      build: ./app/db/
       container_name: hive-db
       restart: always
       volumes:
@@ -10,7 +10,7 @@ services:
         MYSQL_ALLOW_EMPTY_PASSWORD: yes
         MYSQL_DATABASE: "hive"
       ports:
-        - '3306:3306'
+        - "3306:3306"
 
     app:
         build: ./app/
@@ -20,5 +20,23 @@ services:
         depends_on:
           - db
 
+    jenkins:
+        build: ./app/jenkins/
+        container_name: jenkins
+        restart: on-failure
+        privileged: true
+        user: root
+        volumes:
+          - jenkins-data:/var/jenkins_home
+          - jenkins-docker-certs:/certs/client:ro
+        environment:
+          - DOCKER_HOST=tcp://docker:2376
+          - DOCKER_CERT_PAT=/certs/client
+          - DOCKER_TLS_VERIFY=1
+        ports:
+          - "8080:8080"
+
 volumes:
   hive-db:
+  jenkins-data:
+  jenkins-docker-certs:
