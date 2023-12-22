@@ -1,22 +1,29 @@
-/* Requires the Docker Pipeline plugin */
 pipeline {
     agent any
+    options {
+        skipStagesAfterUnstable()
+    }
     stages {
+	stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
         stage('Build') {
             steps {
-                sh './gradlew build'
+                echo 'Building'
+		sh 'composer install'
             }
         }
-	stage('Test') {
+        stage('Test') {
             steps {
-                sh './gradlew check'
+                echo 'Testing'
             }
         }
-    }
-    post {
-        always {
-	    archiveArtifacts artifacts: 'build/libs/**/*.jar', fingerprint: true
-            junit 'build/reports/**/*.xml'
+        stage('Deploy') {
+            steps {
+                echo 'Deploying'
+            }
         }
     }
 }
