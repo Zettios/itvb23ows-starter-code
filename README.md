@@ -24,15 +24,14 @@ and comments can be directed to
 
 -------------------------------
 
-docker network create jenkins
+    sonarscanner:
+      image: sonarsource/sonar-scanner-cli:latest
+      volumes:
+        - sonarscanner-data:/usr/src
+      environment:
+        - SONAR_HOST_URL="http://sonarqube:9000"
+        - SONAR_SCANNER_OPTS="-Dsonar.projectKey=Hive"
+        - SONAR_TOKEN="sqp_sqp_95ec0aa97b17a116a718b1ce1f5240e2dc006d9e"
 
-docker run --name jenkins-docker --rm --detach --privileged --network jenkins --network-alias docker --env DOCKER_TLS_CERTDIR=/certs --volume jenkins-docker-certs:/certs/client --volume jenkins-data:/var/jenkins_home --publish 2376:2376 docker:dind
 
-docker build -t myjenkins-blueocean:lts .
-
-docker run --name jenkins-blueocean --restart=on-failure --detach --network jenkins --env DOCKER_HOST=tcp://docker:2376 --env DOCKER_CERT_PATH=/certs/client --env DOCKER_TLS_VERIFY=1 --volume jenkins-data:/var/jenkins_home --volume jenkins-docker-certs:/certs/client:ro --publish 8080:8080 --publish 50000:50000 myjenkins-blueocean:2.426.2-1
-
-        environment:
-          - DOCKER_HOST=tcp://docker:2376
-          - DOCKER_CERT_PAT=/certs/client
-          - DOCKER_TLS_VERIFY=1
+docker run --rm -e SONAR_HOST_URL="http://localhost:9000" -e SONAR_SCANNER_OPTS="-Dsonar.projectKey=Hive" -e SONAR_TOKEN="sqp_sqp_95ec0aa97b17a116a718b1ce1f5240e2dc006d9e" -v ".:/usr/src" --network host sonarsource/sonar-scanner-cli 

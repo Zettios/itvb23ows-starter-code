@@ -12,7 +12,7 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Building'
-		sh 'composer install'
+		        //sh 'composer install'
             }
         }
         stage('Test') {
@@ -23,6 +23,20 @@ pipeline {
         stage('Deploy') {
             steps {
                 echo 'Deploying'
+            }
+        }
+    }
+    agent { label '!windows' }
+    stages {
+        stage('SonarQube') {
+            steps {
+                script {
+                    scannerHome = tool 'SonarQube Scanner'
+                }
+                withSonarQubeEnv('SonarQube') {
+                    sh "${scannerHome}/bin/sonar-scanner
+                        -Dsonar.projectKey=sqp_95ec0aa97b17a116a718b1ce1f5240e2dc006d9e"
+                }
             }
         }
     }

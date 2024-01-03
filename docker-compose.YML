@@ -36,7 +36,24 @@ services:
         ports:
           - "8080:8080"
 
+    sonarqube:
+      image: sonarqube:latest
+      restart: unless-stopped
+      volumes:
+        - sonarqube_conf:/opt/sonarqube/conf
+        - sonarqube_data:/opt/sonarqube/data
+        - sonarqube_extensions:/opt/sonarqube/extensions
+        - sonarqube_bundled-plugins:/opt/sonarqube/lib/bundled-plugins
+      environment:
+        - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+      ports:
+        - "9000:9000"
+
 volumes:
   hive-db:
   jenkins-data:
   jenkins-docker-certs:
+  sonarqube_conf:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_bundled-plugins:
