@@ -1,41 +1,40 @@
 pipeline {
-    agent any
+    agent none
     options {
         skipStagesAfterUnstable()
     }
     stages {
 	stage('Checkout') {
+	        agent any
             steps {
                 checkout scm
             }
         }
         stage('Build') {
+            agent any
             steps {
                 echo 'Building'
 		        //sh 'composer install'
             }
         }
         stage('Test') {
-            steps {
-                echo 'Testing'
+            agent {
+                label '!windows'
             }
-        }
-        stage('Deploy') {
             steps {
-                echo 'Deploying'
-            }
-        }
-    }
-    agent { label '!windows' }
-    stages {
-        stage('SonarQube') {
-            steps {
+                echo 'Executing SonarQube scan'
                 script {
                     scannerHome = tool 'SonarQube Scanner'
                 }
                 withSonarQubeEnv('SonarQube') {
                     sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=sqp_95ec0aa97b17a116a718b1ce1f5240e2dc006d9e"
                 }
+            }
+        }
+        stage('Deploy') {
+            agent any
+            steps {
+                echo 'Deploying'
             }
         }
     }
