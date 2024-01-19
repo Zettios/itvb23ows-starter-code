@@ -24,14 +24,6 @@ and comments can be directed to
 
 -------------------------------
 
-    sonarscanner:
-      image: sonarsource/sonar-scanner-cli:latest
-      volumes:
-        - sonarscanner-data:/usr/src
-      environment:
-        - SONAR_HOST_URL="http://sonarqube:9000"
-        - SONAR_SCANNER_OPTS="-Dsonar.projectKey=Hive"
-        - SONAR_TOKEN="sqp_sqp_95ec0aa97b17a116a718b1ce1f5240e2dc006d9e"
-
-
-docker run --rm -e SONAR_HOST_URL="http://localhost:9000" -e SONAR_SCANNER_OPTS="-Dsonar.projectKey=Hive" -e SONAR_TOKEN="sqp_sqp_95ec0aa97b17a116a718b1ce1f5240e2dc006d9e" -v ".:/usr/src" --network host sonarsource/sonar-scanner-cli 
+docker-compose up -d
+docker-compose build --no-cache app
+docker-compose up --no-deps -d app

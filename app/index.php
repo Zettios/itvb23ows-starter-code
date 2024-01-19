@@ -1,23 +1,56 @@
 <?php
     session_start();
 
+    include_once 'restart.php';
+    include_once 'undo.php';
+    $db = include 'database.php';
+
+    if (!isset($_SESSION['board']) || isset($_POST['restart'])) {
+        initGame($db);
+    } else if (isset($_POST['undo'])) {
+        undoMove($_SESSION['last_move'], $db);
+    }
+
+    $lastMoveId = $_SESSION['last_move'];
+
     include_once 'util.php';
 
-    if (!isset($_SESSION['board'])) {
-        header('Location: restart.php');
-        exit(0);
-    }
+    $game_id = $_SESSION['game_id'];
     $board = $_SESSION['board'];
     $player = $_SESSION['player'];
     $hand = $_SESSION['hand'];
 
+    echo $player;
+
     $to = [];
+
+    //Alle posities rond een steen
     foreach ($GLOBALS['OFFSETS'] as $pq) {
+        //Alle posities op het bord waar een steen staat
         foreach (array_keys($board) as $pos) {
+            //Key: ['0,0'] -> ['0','0'] De x en y positie worden opgeslagen in een array
             $pq2 = explode(',', $pos);
-            $to[] = ($pq[0] + $pq2[0]).','.($pq[1] + $pq2[1]);
+            // pq = ['0','1'], pq2 = ['0','0']
+            // ($pq[0] + $pq2[0]) = 0 + 0
+            //($pq[1] + $pq2[1]) = 1 + 0
+            $position = ($pq[0] + $pq2[0]).','.($pq[1] + $pq2[1]);
+
+            if (count($board) >= 2) {
+                if ($board[$pos][0][0] == $player) {
+                    $to[] = $position;
+                }
+            } else {
+                $to[] = $position;
+            }
         }
     }
+    // Removes duplicate keys
+    // Causes issues with the key like the following:
+    // Array(
+    //    ...
+    //    [8] => -1,1
+    //    [11] => 2,-1
+    // )
     $to = array_unique($to);
     if (!count($to)) $to[] = '0,0';
 ?>
@@ -25,53 +58,7 @@
 <html>
     <head>
         <title>Hive</title>
-        <style>
-            div.board {
-                width: 60%;
-                height: 100%;
-                min-height: 500px;
-                float: left;
-                overflow: scroll;
-                position: relative;
-            }
-
-            div.board div.tile {
-                position: absolute;
-            }
-
-            div.tile {
-                display: inline-block;
-                width: 4em;
-                height: 4em;
-                border: 1px solid black;
-                box-sizing: border-box;
-                font-size: 50%;
-                padding: 2px;
-            }
-
-            div.tile span {
-                display: block;
-                width: 100%;
-                text-align: center;
-                font-size: 200%;
-            }
-
-            div.player0 {
-                color: black;
-                background: white;
-            }
-
-            div.player1 {
-                color: white;
-                background: black
-            }
-
-            div.stacked {
-                border-width: 3px;
-                border-color: red;
-                padding: 0;
-            }
-        </style>
+        <link rel="stylesheet" href="styling.css">
     </head>
     <body>
         <div class="board">
@@ -104,8 +91,8 @@
         <div class="hand">
             White:
             <?php
-                foreach ($hand[0] as $tile => $ct) {
-                    for ($i = 0; $i < $ct; $i++) {
+                foreach ($hand[0] as $tile => $remainingPieces) {
+                    for ($i = 0; $i < $remainingPieces; $i++) {
                         echo '<div class="tile player0"><span>'.$tile."</span></div> ";
                     }
                 }
@@ -114,38 +101,57 @@
         <div class="hand">
             Black:
             <?php
-            foreach ($hand[1] as $tile => $ct) {
-                for ($i = 0; $i < $ct; $i++) {
+            foreach ($hand[1] as $tile => $remainingPieces) {
+                for ($i = 0; $i < $remainingPieces; $i++) {
                     echo '<div class="tile player1"><span>'.$tile."</span></div> ";
                 }
             }
             ?>
         </div>
         <div class="turn">
+
             Turn: <?php if ($player == 0) echo "White"; else echo "Black"; ?>
         </div>
+
+        <!---------------- PLAY ---------------->
         <form method="post" action="play.php">
             <select name="piece">
                 <?php
-                    foreach ($hand[$player] as $tile => $ct) {
-                        echo "<option value=\"$tile\">$tile</option>";
+                    //$tile = [Q/B/S/A/G] - $remainingPieces = Amount left
+                    foreach ($hand[$player] as $tile => $remainingPieces) {
+                        if ($remainingPieces != 0) {
+                            echo "<option value=\"$tile\">$tile</option>";
+                        }
                     }
                 ?>
             </select>
             <select name="to">
                 <?php
+                    //$to = Array - $pos = 0,1 / 1,0 / etc.
                     foreach ($to as $pos) {
-                        echo "<option value=\"$pos\">$pos</option>";
+                        if(!array_key_exists($pos, $board)) {
+                            if (count($board) >= 2) {
+                                if (neighboursAreSameColor($player, $pos, $board)) {
+                                    echo "<option value=\"$pos\">$pos</option>";
+                                }
+                            } else {
+                                echo "<option value=\"$pos\">$pos</option>";
+                            }
+                        }
                     }
                 ?>
             </select>
             <input type="submit" value="Play">
         </form>
+
+        <!----------------  MOVE ---------------->
         <form method="post" action="move.php">
             <select name="from">
                 <?php
                     foreach (array_keys($board) as $pos) {
-                        echo "<option value=\"$pos\">$pos</option>";
+                        if ($board[$pos][0][0] == $player) {
+                            echo "<option value=\"$pos\">$pos</option>";
+                        }
                     }
                 ?>
             </select>
@@ -161,13 +167,14 @@
         <form method="post" action="pass.php">
             <input type="submit" value="Pass">
         </form>
-        <form method="post" action="restart.php">
-            <input type="submit" value="Restart">
+        <form method="post" action="index.php">
+            <input type="submit" name="restart" value="Restart">
         </form>
         <strong><?php if (isset($_SESSION['error'])) echo($_SESSION['error']); unset($_SESSION['error']); ?></strong>
         <ol>
             <?php
-                $db = include 'database.php';
+                echo "Game id: " . $game_id . "<br>";
+                echo "Last move id: " . $lastMoveId . (" Current move id: " . $lastMoveId + 1);
                 $stmt = $db->prepare('SELECT * FROM moves WHERE game_id = '.$_SESSION['game_id']);
                 $stmt->execute();
                 $result = $stmt->get_result();
@@ -176,8 +183,8 @@
                 }
             ?>
         </ol>
-        <form method="post" action="undo.php">
-            <input type="submit" value="Undo">
+        <form method="post" action="index.php">
+            <input type="submit" name="undo" value="Undo" <?php if ($lastMoveId <= '0'){ ?> disabled <?php   } ?>>
         </form>
     </body>
 </html>

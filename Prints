@@ -1,0 +1,72 @@
+Tile cords:
+    0,-1   1,-1
+-1,0    0,0     1,0
+    -1,1   0,1
+
+Board:
+Array
+(
+    [0,0] => Array
+        (
+            [0] => Array
+                (
+                    [0] => 0    // Player 0 = White / 1 = Black
+                    [1] => Q
+                )
+
+        )
+    [1,0] => Array
+        (
+            [0] => Array
+                (
+                    [0] => 1    // Player 0 = White / 1 = Black
+                    [1] => Q
+                )
+
+        )
+    [0,-1] => Array
+        (
+            [0] => Array
+                (
+                    [0] => 0    // Player 0 = White / 1 = Black
+                    [1] => B
+                )
+        )
+)
+
+Hand:
+Array
+(
+    [0] => Array
+        (
+            [Q] => 1
+            [B] => 2
+            [S] => 2
+            [A] => 3
+            [G] => 3
+        )
+
+    [1] => Array
+        (
+            [Q] => 1
+            [B] => 2
+            [S] => 2
+            [A] => 3
+            [G] => 3
+        )
+
+)
+
+To:
+Array
+(
+    [0] => 0,1
+    [1] => 0,-1
+    [2] => 1,0
+    [3] => -1,0
+    [4] => -1,1
+    [5] => 1,-1
+)
+
+Player
+0 / 1  // Player 0 = White / 1 = Black
