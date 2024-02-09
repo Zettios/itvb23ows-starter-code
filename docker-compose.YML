@@ -3,14 +3,13 @@ services:
     db:
       build: ./app/db/
       container_name: hive-db
-      restart: always
       volumes:
         - hive-db:/var/lib/mysql
       environment:
-        MYSQL_ALLOW_EMPTY_PASSWORD: yes
         MYSQL_DATABASE: "hive"
+        MYSQL_ROOT_PASSWORD: password1234
       ports:
-        - "3306:3306"
+        - "3304:3306"
 
     app:
         build: ./app/
