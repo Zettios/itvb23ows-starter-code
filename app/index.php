@@ -1,22 +1,25 @@
 <?php
     session_start();
 
-    include_once 'game_manager/util.php';
+    include_once 'game_manager/hive_util.php';
     include_once 'game_manager/game_manager.php';
-    include 'database.php';
+    include_once 'database.php';
 
-    $db = connect_to_database();
+    $util = new hive_util();
+    $database = new database();
+    $db = $database->connect_to_database();
+    $game_manager = new game_manager($database, $util);
 
     if (!isset($_SESSION['board']) || isset($_POST['restart'])) {
-        init_game($db);
+        $game_manager->init_game($db);
     } else if (isset($_POST['play'])) {
-        play_insect($db);
+        $game_manager->play_insect($db);
     } else if (isset($_POST['move'])) {
-        move_insect_old($db);
+        $game_manager->move_insect_old($db);
     } else if (isset($_POST['pass'])) {
-        pass_turn($db);
+        $game_manager->pass_turn($db);
     } else if (isset($_POST['undo'])) {
-        undo_move($_SESSION['last_move'], $db);
+        $game_manager->undo_move($_SESSION['last_move'], $db);
     }
 
     $lastMoveId = $_SESSION['last_move'];
@@ -56,7 +59,7 @@
 
                 if (count($board) >= 2) {
                     if ($board[$pos][count($board[$pos])-1][0] == $player) {
-                        if (!array_key_exists($position, $board) && neighbours_are_same_color($player, $position, $board)) {
+                        if (!array_key_exists($position, $board) && $util->neighbours_are_same_color($player, $position, $board)) {
                             $to[] = $position;
                             $playPositions[] = $position;
                         }
@@ -183,7 +186,7 @@
 
         <!---------------- PASS ---------------->
         <form method="post" action="index.php">
-            <input type="submit" name="pass" value="Pass">
+            <input type="submit" name="pass" value="Pass" disabled>
         </form>
 
         <!---------------- RESTART ---------------->

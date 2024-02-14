@@ -24,6 +24,18 @@ and comments can be directed to
 
 -------------------------------
 
+Om docker-compose draaien
+```
 docker-compose up -d
+```
+
+Om alleen 'app' te herbouwen
+```
 docker-compose build --no-cache app
 docker-compose up --no-deps -d app
+```
+
+Om tests te runnen:
+```
+./vendor/bin/phpunit
+```
