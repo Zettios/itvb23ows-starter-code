@@ -1,7 +1,7 @@
 <?php
 class game_manager {
-    private $database;
-    private $util;
+    private database $database;
+    private hive_util $util;
 
     function __construct($database, $util) {
         $this->database = $database;
@@ -19,7 +19,7 @@ class game_manager {
         $_SESSION['game_id'] = $db->insert_id;
     }
 
-    function play_insect($db) {
+    function play_insect($db_conn) {
         $piece = $_POST['piece'];
         $to = $_POST['to'];
 
@@ -27,31 +27,34 @@ class game_manager {
         $board = $_SESSION['board'];
         $hand = $_SESSION['hand'][$player];
 
-        if (!$hand[$piece])
+        if (!$hand[$piece]) {
             $_SESSION['error'] = "Player does not have tile";
-        elseif (isset($board[$to]))
+        } elseif (isset($board[$to])) {
             $_SESSION['error'] = 'Board position is not empty';
-        elseif (count($board) && !$this->util->has_neighBour($to, $board))
+        } elseif (count($board) && !$this->util->has_neighBour($to, $board)) {
             $_SESSION['error'] = "board position has no neighbour";
-        elseif (array_sum($hand) < 11 && !$this->util->neighbours_are_same_color($player, $to, $board))
+        } elseif (array_sum($hand) < 11 && !$this->util->neighbours_are_same_color_new($player, $to, $board)) {
             $_SESSION['error'] = "Board position has opposing neighbour";
-        elseif (array_sum($hand) < 9 && $hand['Q'] >= 1 && $piece != "Q") {
+        } elseif (array_sum($hand) < 9 && $hand['Q'] >= 1 && $piece != "Q") {
             $_SESSION['error'] = 'Must play queen bee';
         } else {
             $_SESSION['board'][$to] = [[$_SESSION['player'], $piece]];
             $_SESSION['hand'][$player][$piece]--;
             $_SESSION['player'] = 1 - $_SESSION['player'];
 
-            $state = $this->database->get_state();
+            $state = $this->get_game_state();
 
-            $stmt = $db->prepare('insert into moves (game_id, type, move_from, move_to, previous_id, state) values (?, "play", ?, ?, ?, ?)');
-            $stmt->bind_param('issis', $_SESSION['game_id'], $piece, $to, $_SESSION['last_move'], $state);
-            $stmt->execute();
-            $_SESSION['last_move'] = $db->insert_id;
+            $_SESSION['last_move'] = $this->database->insert_player_move(
+                $db_conn,
+                "play",
+                $_SESSION['game_id'],
+                $piece, $to,
+                $_SESSION['last_move'],
+                $state);
         }
     }
 
-    function move_insect_old($db) {
+    function move_insect($db_conn) {
         $from = $_POST['from'];
         $to = $_POST['to'];
 
@@ -125,20 +128,29 @@ class game_manager {
 
                 $_SESSION['player'] = 1 - $_SESSION['player'];
 
-                $game_state = $this->database->get_state();
+                $game_state = $this->get_game_state();
 
-                $stmt = $db->prepare('insert into moves (game_id, type, move_from, move_to, previous_id, state) values (?, "move", ?, ?, ?, ?)');
-                $stmt->bind_param('issis', $_SESSION['game_id'], $from, $to, $_SESSION['last_move'], $game_state);
-                $stmt->execute();
-                $_SESSION['last_move'] = $db->insert_id;
+                $_SESSION['last_move'] = $this->database->insert_player_move(
+                    $db_conn,
+                    "move",
+                    $_SESSION['game_id'],
+                    $from, $to,
+                    $_SESSION['last_move'],
+                    $game_state);
+
             }
             $_SESSION['board'] = $board;
         }
     }
 
+    function checkForWin(): bool {
+
+        return false;
+    }
+
     function pass_turn($db) {
         $stmt = $db->prepare('insert into moves (game_id, type, move_from, move_to, previous_id, state) values (?, "pass", null, null, ?, ?)');
-        $stmt->bind_param('iis', $_SESSION['game_id'], $_SESSION['last_move'], $this->database->get_state());
+        $stmt->bind_param('iis', $_SESSION['game_id'], $_SESSION['last_move'], $this->get_game_state());
         $stmt->execute();
         $_SESSION['last_move'] = $db->insert_id;
         $_SESSION['player'] = 1 - $_SESSION['player'];
@@ -150,9 +162,31 @@ class game_manager {
         $result = $stmt->get_result()->fetch_array();
 
         $_SESSION['last_move'] = $result[5];
-        $this->database->set_state($result);
+        $this->set_game_state($result);
 
         $stmt = $db->prepare('DELETE FROM moves WHERE id = '.$lastMove);
         $stmt->execute();
+    }
+
+    function get_game_state(): string {
+        return serialize([$_SESSION['hand'], $_SESSION['board'], $_SESSION['player']]);
+    }
+
+    function set_game_state($result) {
+        $type = $result[2];
+        $moveFrom = $result[3];
+        $moveTo = $result[4];
+        $state = $result[6];
+        list($hand, $board, $player) = unserialize($state);
+
+        $player = abs($player - 1);
+        if ($type == "play") {
+            $hand[$player][$moveFrom]++;
+            unset($board[$moveTo]);
+        }
+
+        $_SESSION['hand'] = $hand;
+        $_SESSION['board'] = $board;
+        $_SESSION['player'] = $player;
     }
 }

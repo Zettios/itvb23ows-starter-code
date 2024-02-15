@@ -2,12 +2,13 @@
 class hive_util {
     public function __construct() {
         $GLOBALS['OFFSETS'] = [[0, 1], [0, -1], [1, 0], [-1, 0], [-1, 1], [1, -1]];
-        //       0,-1      1,-1
-        //    -1,0     0,0    1,0
-        //       -1,1      0,1
+        //       0,-1   1,-1
+        //    -1,0   0,0   1,0
+        //       -1,1   0,1
     }
 
-    function is_neighbour($to, $boardKey) {
+
+    function is_neighbour($to, $boardKey): bool {
         $to = explode(',', $to);
         $boardKey = explode(',', $boardKey);
 
@@ -27,7 +28,21 @@ class hive_util {
         }
     }
 
-    function neighbours_are_same_color($player, $to, $board) {
+    function neighbours_are_same_color_new($player, $from, $board): bool {
+        $fromPositionAsArray = explode(',', $from);
+        foreach ($GLOBALS['OFFSETS'] as $pq) {
+            $surroundingPosition = ($pq[0] + $fromPositionAsArray[0]).','.($pq[1] + $fromPositionAsArray[1]);
+            if (array_key_exists($surroundingPosition, $board)) {
+                if ($board[$surroundingPosition][count($board[$surroundingPosition])-1][0] != $player) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    // Bugged
+    function neighbours_are_same_color($player, $to, $board): bool {
         foreach ($board as $boardKey => $boardValue) {
             if (!$boardValue) continue;
             $playerValue = $boardValue[count($boardValue) - 1][0];
@@ -37,11 +52,11 @@ class hive_util {
         return true;
     }
 
-    function len($tile) {
+    function len($tile): int {
         return $tile ? count($tile) : 0;
     }
 
-    function slide($board, $from, $to) {
+    function slide($board, $from, $to): bool {
         //Checks if the TO position has a neighbour
         if (!$this->has_neighBour($to, $board)) return false;
         //Checks if the FROM and TO positions are neighbours

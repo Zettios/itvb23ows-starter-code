@@ -1,28 +1,16 @@
 <?php
 class database {
-    function connect_to_database() {
+    function connect_to_database(): mysqli {
         return new mysqli('db', 'root', 'password1234', 'hive');
     }
 
-    function get_state() {
-        return serialize([$_SESSION['hand'], $_SESSION['board'], $_SESSION['player']]);
-    }
+    function insert_player_move($db_conn, $type, $game_id, $from, $to, $last_move, $game_state) {
+        $stmt = $db_conn->prepare('insert into moves (game_id, type, move_from, move_to, previous_id, state) 
+                                    values (?, ?, ?, ?, ?, ?)');
+        $stmt->bind_param('isssis', $game_id, $type, $from, $to, $last_move, $game_state);
+        $stmt->execute();
+        $_SESSION['last_move'] = $db_conn->insert_id;
 
-    function set_state($result) {
-        $type = $result[2];
-        $moveFrom = $result[3];
-        $moveTo = $result[4];
-        $state = $result[6];
-        list($hand, $board, $player) = unserialize($state);
-
-        $player = abs($player - 1);
-        if ($type == "play") {
-            $hand[$player][$moveFrom]++;
-            unset($board[$moveTo]);
-        }
-
-        $_SESSION['hand'] = $hand;
-        $_SESSION['board'] = $board;
-        $_SESSION['player'] = $player;
+        return $db_conn->insert_id;
     }
 }

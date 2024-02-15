@@ -15,7 +15,7 @@
     } else if (isset($_POST['play'])) {
         $game_manager->play_insect($db);
     } else if (isset($_POST['move'])) {
-        $game_manager->move_insect_old($db);
+        $game_manager->move_insect($db);
     } else if (isset($_POST['pass'])) {
         $game_manager->pass_turn($db);
     } else if (isset($_POST['undo'])) {
@@ -31,53 +31,42 @@
     $movePositions = [];
     $playPositions = [];
 
-//    echo "<pre>";
-//    print_r($board);
-//    echo "</pre>";
+    echo "<pre>";
+    print_r($board);
+    echo "</pre>";
 
-//    foreach ($GLOBALS['OFFSETS'] as $pq) {
-//        foreach (array_keys($board) as $pos) {
-//            $pq2 = explode(',', $pos);
-//            $position = ($pq[0] + $pq2[0]).','.($pq[1] + $pq2[1]);
-//
-//            if (count($board) >= 2) {
-//                if ($board[$pos][count($board[$pos])-1][0] == $player) {
-//                    $to[] = $position;
-//                }
-//            } else {
-//                $to[] = $position;
-//            }
-//        }
-//    }
+    if ($game_manager->checkForWin()) {
 
-    if (!empty($board)) {
-        foreach (array_keys($board) as $pos) {
-            foreach ($GLOBALS['OFFSETS'] as $pq) {
-                $pq2 = explode(',', $pos);
-                $position = ($pq[0] + $pq2[0]).','.($pq[1] + $pq2[1]);
+    }
 
-
-                if (count($board) >= 2) {
-                    if ($board[$pos][count($board[$pos])-1][0] == $player) {
-                        if (!array_key_exists($position, $board) && $util->neighbours_are_same_color($player, $position, $board)) {
-                            $to[] = $position;
-                            $playPositions[] = $position;
-                        }
-
-                        $movePositions[] = $position;
-                        if (array_key_exists($position, $board) && $board[$pos][count($board[$pos])-1][1] != "B") {
-                            array_pop($movePositions);
-                        }
+    if (empty($board)) {
+        $to[] = '0,0';
+        $playPositions[] = '0,0';
+    } else if (count($board) == 1) {
+        $boardKeyArray = explode(',', array_key_first($board));
+        foreach ($GLOBALS['OFFSETS'] as $pq) {
+            $surroundingPosition = ($pq[0] + $boardKeyArray[0]).','.($pq[1] + $boardKeyArray[1]);
+            $to[] = $surroundingPosition;
+            $playPositions[] = $surroundingPosition;
+        }
+    } else {
+        foreach (array_keys($board) as $boardPosition) {
+            if ($board[$boardPosition][count($board[$boardPosition])-1][0] == $player) {
+                $boardPositionAsArray = explode(',', $boardPosition);
+                foreach ($GLOBALS['OFFSETS'] as $pq) {
+                    $surroundingPosition = ($pq[0] + $boardPositionAsArray[0]).','.($pq[1] + $boardPositionAsArray[1]);
+                    if (!array_key_exists($surroundingPosition, $board) && $util->neighbours_are_same_color_new($player, $surroundingPosition, $board)) {
+                        $to[] = $surroundingPosition;
+                        $playPositions[] = $surroundingPosition;
                     }
-                } else {
-                    $to[] = $position;
-                    $playPositions[] = $position;
+
+                    $movePositions[] = $surroundingPosition;
+                    if (array_key_exists($surroundingPosition, $board) && $board[$boardPosition][count($board[$boardPosition])-1][1] != "B") {
+                        array_pop($movePositions);
+                    }
                 }
             }
         }
-    } else {
-        $to[] = '0,0';
-        $playPositions[] = '0,0';
     }
 
     $to = array_unique($to);
@@ -95,13 +84,13 @@
             <?php
                 $min_p = 1000;
                 $min_q = 1000;
-                foreach ($board as $pos => $tile) {
-                    $pq = explode(',', $pos);
+                foreach ($board as $boardPosition => $tile) {
+                    $pq = explode(',', $boardPosition);
                     if ($pq[0] < $min_p) $min_p = $pq[0];
                     if ($pq[1] < $min_q) $min_q = $pq[1];
                 }
-                foreach (array_filter($board) as $pos => $tile) {
-                    $pq = explode(',', $pos);
+                foreach (array_filter($board) as $boardPosition => $tile) {
+                    $pq = explode(',', $boardPosition);
                     $pq[0];
                     $pq[1];
                     $h = count($tile);
@@ -155,8 +144,8 @@
             </select>
             <select name="to" <?php if (array_sum($hand[$player]) <= '0'){ echo "disabled"; } ?>>
                 <?php
-                    foreach ($playPositions as $pos) {
-                        echo "<option value=\"$pos\">$pos</option>";
+                    foreach ($playPositions as $boardPosition) {
+                        echo "<option value=\"$boardPosition\">$boardPosition</option>";
                     }
                 ?>
             </select>
@@ -167,17 +156,17 @@
         <form method="post" action="index.php">
             <select name="from" <?php if ($hand[$player]["Q"] >= 1) { echo "disabled"; } ?>>
                 <?php
-                    foreach (array_keys($board) as $pos) {
-                        if ($board[$pos][0][0] == $player) {
-                            echo "<option value=\"$pos\">$pos</option>";
+                    foreach (array_keys($board) as $boardPosition) {
+                        if ($board[$boardPosition][0][0] == $player) {
+                            echo "<option value=\"$boardPosition\">$boardPosition</option>";
                         }
                     }
                 ?>
             </select>
             <select name="to" <?php if ($hand[$player]["Q"] >= 1) { echo "disabled"; } ?>>
                 <?php
-                    foreach ($movePositions as $pos) {
-                        echo "<option value=\"$pos\">$pos</option>";
+                    foreach ($movePositions as $boardPosition) {
+                        echo "<option value=\"$boardPosition\">$boardPosition</option>";
                     }
                 ?>
             </select>
