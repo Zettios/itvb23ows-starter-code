@@ -23,8 +23,83 @@ final class GameManagerTest extends TestCase {
         $this->database_stub = $this->createStub(database::class);
         $this->mysql_conn_stub = $this->createStub(mysqli::class);
 
-        //$this->database_stub->method("insert_player_move")->willReturn(1);
         $this->game_manager = new game_manager($this->database_stub, $util);
+    }
+
+    public function test_show_all_playable_pieces_while_having_played_a_beetle_and_spider() {
+        $this->assertTrue(true);
+    }
+
+    public function test_show_all_playable_pieces_except_all_played_ants() {
+        $this->assertTrue(true);
+    }
+
+    public function test_calculate_correct_play_and_move_values() {
+        $expectedPlayPositions = ["0,-1", "-1,0", "-1,1"];
+        $expectedMovePositions = ["0,1", "0,-1", "-1,0", "-1,1", "1,-1"];
+
+        $player = 0;
+        $board = [
+            "0,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "Q"
+                ]
+            ],
+            "1,0" => [
+                0 => [
+                    0 => 1,
+                    1 => "Q"
+                ]
+            ]
+        ];
+
+
+        $playAndMovePositions = $this->game_manager->get_play_and_move_positions($board, $player);
+        $this->assertSame($expectedPlayPositions, $playAndMovePositions[0]);
+        $this->assertSame($expectedMovePositions, $playAndMovePositions[1]);
+    }
+
+    public function test_move_white_queen_to_lower_left_of_black() {
+        $expected = [
+                "1,0" => [
+                    0 => [
+                        0 => 1,
+                        1 => "Q"
+                    ]
+                ],
+                "0,1" => [
+                    0 => [
+                        0 => 0,
+                        1 => "Q"
+                    ]
+                 ]
+            ];
+
+        $_POST['from'] = "0,0";
+        $_POST['to'] = "0,1";
+        $_SESSION['game_id'] = 0;
+        $_SESSION['last_move'] = 0;
+        $_SESSION['hand'] = [0 => ["Q" => 0, "B" => 2, "S" => 2, "A" => 3, "G" => 3],
+                            1 => ["Q" => 0, "B" => 2, "S" => 2, "A" => 3, "G" => 3]];
+        $_SESSION['player'] = 0; //white
+        $_SESSION['board'] = [
+            "0,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "Q"
+                ]
+            ],
+            "1,0" => [
+                0 => [
+                    0 => 1,
+                    1 => "Q"
+                ]
+            ]
+        ];
+
+        $this->game_manager->move_insect($this->mysql_conn_stub);
+        $this->assertSame($expected, $_SESSION['board']);
     }
 
     public function test_place_tile_on_space_where_another_tile_moved() {

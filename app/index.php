@@ -27,7 +27,6 @@
     $board = $_SESSION['board'];
     $player = $_SESSION['player'];
     $hand = $_SESSION['hand'];
-    $to = [];
     $movePositions = [];
     $playPositions = [];
 
@@ -35,43 +34,13 @@
     print_r($board);
     echo "</pre>";
 
-    if ($game_manager->checkForWin()) {
+    if ($game_manager->check_for_win()) {
 
     }
 
-    if (empty($board)) {
-        $to[] = '0,0';
-        $playPositions[] = '0,0';
-    } else if (count($board) == 1) {
-        $boardKeyArray = explode(',', array_key_first($board));
-        foreach ($GLOBALS['OFFSETS'] as $pq) {
-            $surroundingPosition = ($pq[0] + $boardKeyArray[0]).','.($pq[1] + $boardKeyArray[1]);
-            $to[] = $surroundingPosition;
-            $playPositions[] = $surroundingPosition;
-        }
-    } else {
-        foreach (array_keys($board) as $boardPosition) {
-            if ($board[$boardPosition][count($board[$boardPosition])-1][0] == $player) {
-                $boardPositionAsArray = explode(',', $boardPosition);
-                foreach ($GLOBALS['OFFSETS'] as $pq) {
-                    $surroundingPosition = ($pq[0] + $boardPositionAsArray[0]).','.($pq[1] + $boardPositionAsArray[1]);
-                    if (!array_key_exists($surroundingPosition, $board) && $util->neighbours_are_same_color_new($player, $surroundingPosition, $board)) {
-                        $to[] = $surroundingPosition;
-                        $playPositions[] = $surroundingPosition;
-                    }
-
-                    $movePositions[] = $surroundingPosition;
-                    if (array_key_exists($surroundingPosition, $board) && $board[$boardPosition][count($board[$boardPosition])-1][1] != "B") {
-                        array_pop($movePositions);
-                    }
-                }
-            }
-        }
-    }
-
-    $to = array_unique($to);
-    $playPositions = array_unique($playPositions);
-    $movePositions = array_unique($movePositions);
+    $playAndMovePositions = $game_manager->get_play_and_move_positions($board, $player);
+    $playPositions = $playAndMovePositions[0];
+    $movePositions = $playAndMovePositions[1];
 ?>
 <!DOCTYPE html>
 <html>

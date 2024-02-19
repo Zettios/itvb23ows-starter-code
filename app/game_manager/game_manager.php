@@ -19,6 +19,40 @@ class game_manager {
         $_SESSION['game_id'] = $db->insert_id;
     }
 
+    function get_play_and_move_positions($board, $player): array {
+        $playPositions = [];
+        $movePositions = [];
+
+        if (empty($board)) {
+            $playPositions[] = '0,0';
+        } else if (count($board) == 1) {
+            $boardKeyArray = explode(',', array_key_first($board));
+            foreach ($GLOBALS['OFFSETS'] as $pq) {
+                $surroundingPosition = ($pq[0] + $boardKeyArray[0]).','.($pq[1] + $boardKeyArray[1]);
+                $playPositions[] = $surroundingPosition;
+            }
+        } else {
+            foreach (array_keys($board) as $boardPosition) {
+                if ($board[$boardPosition][count($board[$boardPosition])-1][0] == $player) {
+                    $boardPositionAsArray = explode(',', $boardPosition);
+                    foreach ($GLOBALS['OFFSETS'] as $pq) {
+                        $surroundingPosition = ($pq[0] + $boardPositionAsArray[0]).','.($pq[1] + $boardPositionAsArray[1]);
+                        if (!array_key_exists($surroundingPosition, $board) && $this->util->neighbours_are_same_color_new($player, $surroundingPosition, $board)) {
+                            $playPositions[] = $surroundingPosition;
+                        }
+
+                        $movePositions[] = $surroundingPosition;
+                        if (array_key_exists($surroundingPosition, $board) && $board[$boardPosition][count($board[$boardPosition])-1][1] != "B") {
+                            array_pop($movePositions);
+                        }
+                    }
+                }
+            }
+        }
+
+        return [array_unique($playPositions), array_unique($movePositions)];
+    }
+
     function play_insect($db_conn) {
         $piece = $_POST['piece'];
         $to = $_POST['to'];
@@ -143,7 +177,7 @@ class game_manager {
         }
     }
 
-    function checkForWin(): bool {
+    function check_for_win(): bool {
 
         return false;
     }
