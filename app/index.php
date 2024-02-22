@@ -30,10 +30,6 @@
     $movePositions = [];
     $playPositions = [];
 
-    echo "<pre>";
-    print_r($board);
-    echo "</pre>";
-
     if ($game_manager->check_for_win()) {
 
     }
