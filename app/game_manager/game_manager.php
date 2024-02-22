@@ -8,15 +8,25 @@ class game_manager {
         $this->util = $util;
     }
 
-    function init_game($db) {
+    function init_game($db_connection) {
         $_SESSION['board'] = [];
         $_SESSION['hand'] = [0 => ["Q" => 1, "B" => 2, "S" => 2, "A" => 3, "G" => 3],
             1 => ["Q" => 1, "B" => 2, "S" => 2, "A" => 3, "G" => 3]];
         $_SESSION['player'] = 0; //white
         $_SESSION['last_move'] = 0;
 
-        $db->prepare('INSERT INTO games VALUES ()')->execute();
-        $_SESSION['game_id'] = $db->insert_id;
+        $db_connection->prepare('INSERT INTO games VALUES ()')->execute();
+        $_SESSION['game_id'] = $db_connection->insert_id;
+    }
+
+    function get_playable_tiles($hand, $player): array {
+        $playableTiles = [];
+        foreach ($hand[$player] as $tile => $remainingPieces) {
+            if ($remainingPieces != 0) {
+                $playableTiles[] = $tile;
+            }
+        }
+        return $playableTiles;
     }
 
     function get_play_and_move_positions($board, $player): array {
@@ -53,7 +63,7 @@ class game_manager {
         return [array_unique($playPositions), array_unique($movePositions)];
     }
 
-    function play_insect($db_conn) {
+    function play_insect($db_connection) {
         $piece = $_POST['piece'];
         $to = $_POST['to'];
 
@@ -79,7 +89,7 @@ class game_manager {
             $state = $this->get_game_state();
 
             $_SESSION['last_move'] = $this->database->insert_player_move(
-                $db_conn,
+                $db_connection,
                 "play",
                 $_SESSION['game_id'],
                 $piece, $to,
@@ -88,7 +98,7 @@ class game_manager {
         }
     }
 
-    function move_insect($db_conn) {
+    function move_insect($db_connection) {
         $from = $_POST['from'];
         $to = $_POST['to'];
 
@@ -165,7 +175,7 @@ class game_manager {
                 $game_state = $this->get_game_state();
 
                 $_SESSION['last_move'] = $this->database->insert_player_move(
-                    $db_conn,
+                    $db_connection,
                     "move",
                     $_SESSION['game_id'],
                     $from, $to,
@@ -182,24 +192,19 @@ class game_manager {
         return false;
     }
 
-    function pass_turn($db) {
-        $stmt = $db->prepare('insert into moves (game_id, type, move_from, move_to, previous_id, state) values (?, "pass", null, null, ?, ?)');
-        $stmt->bind_param('iis', $_SESSION['game_id'], $_SESSION['last_move'], $this->get_game_state());
-        $stmt->execute();
-        $_SESSION['last_move'] = $db->insert_id;
+    function pass_turn($db_connection) {
+        $this->database->insert_player_pass($db_connection);
+        $_SESSION['last_move'] = $db_connection->insert_id;
         $_SESSION['player'] = 1 - $_SESSION['player'];
     }
 
-    function undo_move($lastMove, $db) {
-        $stmt = $db->prepare('SELECT * FROM moves WHERE id = '.$lastMove);
-        $stmt->execute();
-        $result = $stmt->get_result()->fetch_array();
+    function undo_move($lastMove, $db_connection) {
+        $result = $this->database->get_previous_move($db_connection, $lastMove);
 
         $_SESSION['last_move'] = $result[5];
         $this->set_game_state($result);
 
-        $stmt = $db->prepare('DELETE FROM moves WHERE id = '.$lastMove);
-        $stmt->execute();
+        $this->database->delete_previous_move($db_connection, $lastMove);
     }
 
     function get_game_state(): string {

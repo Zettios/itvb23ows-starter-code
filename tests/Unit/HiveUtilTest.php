@@ -27,7 +27,6 @@ final class HiveUtilTest extends TestCase {
     }
 
     public function test_len_is_one() {
-        $this->util = new hive_util();
         $expected = 1;
         $testVar = [
             "0,0" => [

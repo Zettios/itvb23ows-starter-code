@@ -7,19 +7,19 @@
 
     $util = new hive_util();
     $database = new database();
-    $db = $database->connect_to_database();
+    $db_connection = $database->connect_to_database();
     $game_manager = new game_manager($database, $util);
 
     if (!isset($_SESSION['board']) || isset($_POST['restart'])) {
-        $game_manager->init_game($db);
+        $game_manager->init_game($db_connection);
     } else if (isset($_POST['play'])) {
-        $game_manager->play_insect($db);
+        $game_manager->play_insect($db_connection);
     } else if (isset($_POST['move'])) {
-        $game_manager->move_insect($db);
+        $game_manager->move_insect($db_connection);
     } else if (isset($_POST['pass'])) {
-        $game_manager->pass_turn($db);
+        $game_manager->pass_turn($db_connection);
     } else if (isset($_POST['undo'])) {
-        $game_manager->undo_move($_SESSION['last_move'], $db);
+        $game_manager->undo_move($_SESSION['last_move'], $db_connection);
     }
 
     $lastMoveId = $_SESSION['last_move'];
@@ -37,6 +37,8 @@
     if ($game_manager->check_for_win()) {
 
     }
+
+    $playableTiles = $game_manager->get_playable_tiles($hand, $player);
 
     $playAndMovePositions = $game_manager->get_play_and_move_positions($board, $player);
     $playPositions = $playAndMovePositions[0];
@@ -104,10 +106,8 @@
         <form method="post" action="index.php">
             <select name="piece" <?php if (array_sum($hand[$player]) <= '0'){ echo "disabled"; } ?>>
                 <?php
-                    foreach ($hand[$player] as $tile => $remainingPieces) {
-                        if ($remainingPieces != 0) {
-                            echo "<option value=\"$tile\">$tile</option>";
-                        }
+                    foreach ($playableTiles as $key => $tile) {
+                        echo "<option value=\"$tile\">$tile</option>";
                     }
                 ?>
             </select>
@@ -159,9 +159,7 @@
         <ol>
             <?php
                 echo "Game id: " . $game_id . "<br>";
-                $stmt = $db->prepare('SELECT * FROM moves WHERE game_id = '.$_SESSION['game_id']);
-                $stmt->execute();
-                $result = $stmt->get_result();
+                $result = $database->get_game_history($db_connection, $game_id);
                 while ($row = $result->fetch_array()) {
                     echo '<li>'.$row[2].' '.$row[3].' '.$row[4].'</li>';
                 }

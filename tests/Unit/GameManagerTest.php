@@ -27,11 +27,104 @@ final class GameManagerTest extends TestCase {
     }
 
     public function test_show_all_playable_pieces_while_having_played_a_beetle_and_spider() {
-        $this->assertTrue(true);
+        $expected = [
+            0 => "Q",
+            1 => "B",
+            2 => "S",
+            3 => "A",
+            4 => "G"
+        ];
+
+        $hand = [0 => ["Q" => 1, "B" => 1, "S" => 1, "A" => 3, "G" => 3],
+                1 => ["Q" => 1, "B" => 2, "S" => 2, "A" => 3, "G" => 3]];
+        $result = $this->game_manager->get_playable_tiles($hand, 0);
+
+        $this->assertSame($expected, $result);
     }
 
     public function test_show_all_playable_pieces_except_all_played_ants() {
-        $this->assertTrue(true);
+        $expected = [
+            0 => "Q",
+            1 => "B",
+            2 => "S",
+            3 => "G"
+        ];
+
+        $hand = [0 => ["Q" => 1, "B" => 2, "S" => 2, "A" => 0, "G" => 3],
+                 1 => ["Q" => 1, "B" => 2, "S" => 2, "A" => 3, "G" => 3]];
+        $result = $this->game_manager->get_playable_tiles($hand, 0);
+
+        $this->assertSame($expected, $result);
+    }
+
+    public function test_played_all_pieces() {
+        $expected = [];
+
+        $hand = [0 => ["Q" => 1, "B" => 2, "S" => 2, "A" => 3, "G" => 3],
+                1 => ["Q" => 0, "B" => 0, "S" => 0, "A" => 0, "G" => 0]];
+        $result = $this->game_manager->get_playable_tiles($hand, 1);
+
+        $this->assertSame($expected, $result);
+    }
+
+    public function test_undo_play() {
+        $getPreviousMoveReturnResult = [
+            0 => "280",
+            1 => "73",
+            2 => "play",
+            3 => "Q",
+            4 => "1,0",
+            5 => "279",
+            6 => 'a:3:{i:0;a:2:{i:0;a:5:{s:1:"Q";i:0;s:1:"B";i:2;s:1:"S";i:2;s:1:"A";i:3;s:1:"G";i:3;}i:1;a:5:{s:1:"Q";i:0;s:1:"B";i:2;s:1:"S";i:2;s:1:"A";i:3;s:1:"G";i:3;}}i:1;a:2:{s:3:"0,0";a:1:{i:0;a:2:{i:0;i:0;i:1;s:1:"Q";}}s:3:"1,0";a:1:{i:0;a:2:{i:0;i:1;i:1;s:1:"Q";}}}i:2;i:0;}',
+        ];
+        $this->database_stub ->method('get_previous_move')->willReturn($getPreviousMoveReturnResult);
+        $expected = [
+            "0,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "Q"
+                ]
+            ],
+        ];
+        $expectedPlayer = 0;
+        $_SESSION['last_move'] = -1;
+
+        $this->game_manager->undo_move($_SESSION['last_move'], $this->mysql_conn_stub);
+        $this->assertSame($expected, $_SESSION['board']);
+        $this->assertEquals($expectedPlayer, $expectedPlayer);
+    }
+
+    public function test_undo_move() {
+        $getPreviousMoveReturnResult = [
+            0 => "283",
+            1 => "74",
+            2 => "move",
+            3 => "0,0",
+            4 => "0,1",
+            5 => "282",
+            6 => 'a:3:{i:0;a:2:{i:0;a:5:{s:1:"Q";i:0;s:1:"B";i:2;s:1:"S";i:2;s:1:"A";i:3;s:1:"G";i:3;}i:1;a:5:{s:1:"Q";i:0;s:1:"B";i:2;s:1:"S";i:2;s:1:"A";i:3;s:1:"G";i:3;}}i:1;a:2:{s:3:"0,0";a:1:{i:0;a:2:{i:0;i:0;i:1;s:1:"Q";}}s:3:"1,0";a:1:{i:0;a:2:{i:0;i:1;i:1;s:1:"Q";}}}i:2;i:1;}',
+        ];
+        $this->database_stub ->method('get_previous_move')->willReturn($getPreviousMoveReturnResult);
+        $expected = [
+            "0,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "Q"
+                ]
+            ],
+            "1,0" => [
+                0 => [
+                    0 => 1,
+                    1 => "Q"
+                ]
+            ],
+        ];
+        $expectedPlayer = 0;
+        $_SESSION['last_move'] = -1;
+
+        $this->game_manager->undo_move($_SESSION['last_move'], $this->mysql_conn_stub);
+        $this->assertSame($expected, $_SESSION['board']);
+        $this->assertEquals($expectedPlayer, $expectedPlayer);
     }
 
     public function test_calculate_correct_play_and_move_values() {
