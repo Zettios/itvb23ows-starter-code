@@ -61,8 +61,14 @@ class hive_util {
         $toPositionAsArray = explode(',', $to);
         foreach ($GLOBALS['OFFSETS'] as $pq) {
             $surroundingPosition = ($pq[0] + $toPositionAsArray[0]).','.($pq[1] + $toPositionAsArray[1]);
-            if ($surroundingPosition != $from && array_key_exists($surroundingPosition, $board)) {
-                return true;
+            if (isset($board[$from]) && count($board[$from]) >= 1) {
+                if (array_key_exists($surroundingPosition, $board)) {
+                    return true;
+                }
+            } else {
+                if ($surroundingPosition != $from && array_key_exists($surroundingPosition, $board)) {
+                    return true;
+                }
             }
         }
         return false;
@@ -104,10 +110,14 @@ class hive_util {
     }
 
     function can_tile_slide($board, $from, $to): bool {
+
         //Checks if the TO position has a neighbour
         if (!$this->has_move_neighbour($from, $to, $board)) return false;
+
         //Checks if the FROM and TO positions are neighbours
         if (!$this->is_neighbour($from, $to)) return false;
+
+
         $toAsArray = explode(',', $to);
         $common = [];
         foreach ($GLOBALS['OFFSETS'] as $pq) {
@@ -120,10 +130,13 @@ class hive_util {
             }
         }
 
+
+
         if (!($board[$common[0]] ?? false) && !($board[$common[1]] ?? false) &&
             !($board[$from] ?? false) && !($board[$to] ?? false)) {
             return false;
         }
+
 
         $min1 = array_key_exists($common[0], $board) ? $this->len($board[$common[0]]) : 0;
         $min2 = array_key_exists($common[1], $board) ? $this->len($board[$common[1]]) : 0;

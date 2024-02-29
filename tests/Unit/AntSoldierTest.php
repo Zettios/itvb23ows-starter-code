@@ -26,10 +26,7 @@ final class AntSoldierTest extends TestCase {
 
         $board = [
             "0,0" => [
-                0 => [
-                    0 => 0,
-                    1 => "A"
-                ]
+
             ],
             "1,0" => [
                 0 => [
@@ -72,10 +69,7 @@ final class AntSoldierTest extends TestCase {
                 ]
             ],
             "-1,0" => [
-                0 => [
-                    0 => 0,
-                    1 => "A"
-                ]
+
             ],
             "2,-1" => [
                 0 => [

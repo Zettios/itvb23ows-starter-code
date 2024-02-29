@@ -9,13 +9,14 @@
         public function calculate_move_position($from, $board): array {
             $movePositions = [];
             $fromPositionAsArray = explode(',', $from);
+            echo "<pre>";
             foreach ($GLOBALS['OFFSETS'] as $pq) {
                 $surroundPositions = ($pq[0] + $fromPositionAsArray[0]) . ',' . ($pq[1] + $fromPositionAsArray[1]);
                 if ($this->util->can_tile_slide($board, $from, $surroundPositions)) {
                     $movePositions[] = $surroundPositions;
                 }
             }
-
+            echo "</pre>";
             return $movePositions;
         }
 

@@ -14,10 +14,6 @@ class QueenBeeTest extends TestCase {
         $this->queenBee = new queenBee($this->util);
     }
 
-    public function test_assert_true() {
-        $this->assertTrue(true);
-    }
-
     public function test_no_non_slidable_positions() {
         $expected = "0,1";
 
