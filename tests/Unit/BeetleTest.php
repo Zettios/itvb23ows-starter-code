@@ -6,12 +6,11 @@ require_once dirname(__DIR__) . '/../app/insects/insect.php';
 require_once dirname(__DIR__) . '/../app/insects/beetle.php';
 
 class BeetleTest extends TestCase {
-    private hive_util $util;
     private beetle $beetle;
 
     protected function setUp(): void {
-        $this->util = new hive_util();
-        $this->beetle = new beetle($this->util);
+        $util = new hive_util();
+        $this->beetle = new beetle($util);
     }
 
     public function test_get_beetle_move_positions() {

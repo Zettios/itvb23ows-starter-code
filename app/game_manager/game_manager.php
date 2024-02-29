@@ -37,7 +37,7 @@ class game_manager {
         $q = new queenBee($this->util);
         $s = new spider();
         $a = new antSoldier($this->util);
-        $g = new grasshopper();
+        $g = new grasshopper($this->util);
         $testBeetle = [];
         $testQueen = [];
         $testSpider = [];
@@ -65,13 +65,13 @@ class game_manager {
                             $testBeetle = array_merge($testBeetle, $b->calculate_move_position($boardPosition, $board));
                             break;
                         case "S":
-                            $testAnt = array_merge($testSpider, $s->calculate_move_position($boardPosition, $board));
+                            $testSpider = array_merge($testSpider, $s->calculate_move_position($boardPosition, $board));
                             break;
                         case "A":
                             $testAnt = array_merge($testAnt, $a->calculate_move_position($boardPosition, $board));
                             break;
                         case "G":
-                            $testAnt = array_merge($testGrasshopper, $g->calculate_move_position($boardPosition, $board));
+                            $testGrasshopper = array_merge($testGrasshopper, $g->calculate_move_position($boardPosition, $board));
                             break;
                     }
                     if (isset($board[$boardPosition])) {
