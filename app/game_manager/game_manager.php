@@ -33,6 +33,17 @@ class game_manager {
         $playPositions = [];
         $movePositions = [];
 
+        $b = new beetle($this->util);
+        $q = new queenBee($this->util);
+        $s = new spider();
+        $a = new antSoldier($this->util);
+        $g = new grasshopper();
+        $testBeetle = [];
+        $testQueen = [];
+        $testSpider = [];
+        $testAnt = [];
+        $testGrasshopper = [];
+
         if (empty($board)) {
             $playPositions[] = '0,0';
         } else if (count($board) == 1) {
@@ -44,6 +55,31 @@ class game_manager {
         } else {
             foreach (array_keys($board) as $boardPosition) {
                 if ($board[$boardPosition][count($board[$boardPosition])-1][0] == $player) {
+                    $tile = array_pop($board[$boardPosition]);
+                    $insectType = $tile[1];
+                    switch ($insectType) {
+                        case "Q":
+                            $testQueen = $q->calculate_move_position($boardPosition, $board);
+                            break;
+                        case "B":
+                            $testBeetle = array_merge($testBeetle, $b->calculate_move_position($boardPosition, $board));
+                            break;
+                        case "S":
+                            $testAnt = array_merge($testSpider, $s->calculate_move_position($boardPosition, $board));
+                            break;
+                        case "A":
+                            $testAnt = array_merge($testAnt, $a->calculate_move_position($boardPosition, $board));
+                            break;
+                        case "G":
+                            $testAnt = array_merge($testGrasshopper, $g->calculate_move_position($boardPosition, $board));
+                            break;
+                    }
+                    if (isset($board[$boardPosition])) {
+                        array_push($board[$boardPosition], $tile);
+                    } else {
+                        $board[$boardPosition] = [$tile];
+                    }
+
                     $boardPositionAsArray = explode(',', $boardPosition);
                     foreach ($GLOBALS['OFFSETS'] as $pq) {
                         $surroundingPosition = ($pq[0] + $boardPositionAsArray[0]).','.($pq[1] + $boardPositionAsArray[1]);
@@ -58,6 +94,20 @@ class game_manager {
                     }
                 }
             }
+
+
+            echo "<pre>";
+            echo "Queen:<br>";
+            print_r($testQueen);
+            echo "<br><br>Beetle:<br>";
+            print_r($testBeetle);
+            echo "<br><br>Spider:<br>";
+            print_r($testSpider);
+            echo "<br><br>Ant:<br>";
+            print_r($testAnt);
+            echo "<br><br>Grasshopper:<br>";
+            print_r($testGrasshopper);
+            echo "</pre>";
         }
 
         return [array_unique($playPositions), array_unique($movePositions)];
@@ -75,7 +125,7 @@ class game_manager {
             $_SESSION['error'] = "Player does not have tile";
         } elseif (isset($board[$to])) {
             $_SESSION['error'] = 'Board position is not empty';
-        } elseif (count($board) && !$this->util->has_neighBour($to, $board)) {
+        } elseif (count($board) && !$this->util->has_play_neighbour($to, $board)) {
             $_SESSION['error'] = "board position has no neighbour";
         } elseif (array_sum($hand) < 11 && !$this->util->neighbours_are_same_color_new($player, $to, $board)) {
             $_SESSION['error'] = "Board position has opposing neighbour";
@@ -116,7 +166,8 @@ class game_manager {
         else {
             $tile = array_pop($board[$from]);
 
-            if (!$this->util->has_neighBour($to, $board)) {
+            //if (!$this->util->has_neighBour($to, $board)) {
+            if (!$this->util->has_move_neighbour($from, $to, $board)) {
                 $_SESSION['error'] = "Move would split hive";
             } else {
                 $all = array_keys($board);
@@ -146,7 +197,7 @@ class game_manager {
                     } elseif (isset($board[$to]) && $tile[1] != "B") {
                         $_SESSION['error'] = 'Tile not empty';
                     } elseif ($tile[1] == "Q" || $tile[1] == "B") {
-                        if (!$this->util->slide($board, $from, $to)) {
+                        if (!$this->util->can_tile_slide($board, $from, $to)) {
                             $_SESSION['error'] = 'Tile must slide';
                         }
                     }
@@ -187,8 +238,53 @@ class game_manager {
         }
     }
 
-    function check_for_win(): bool {
+    function check_for_win($board): array {
+        $whiteSurrounded = true;
+        $blackSurrounded = true;
 
+        $queen_positions = [
+            0 => "",
+            1 => ""
+        ];
+
+        foreach (array_keys($board) as $boardKey) {
+            if (count($board[$boardKey]) > 1) {
+                foreach ($board[$boardKey] as $tile) {
+                    if ($tile[1] == "Q") {
+                        $queen_positions[$tile[0]] = $boardKey;
+                    }
+                }
+            } else {
+                if ($board[$boardKey][0][1] == "Q") {
+                    $queen_positions[$board[$boardKey][0][0]] = $boardKey;
+                }
+            }
+        }
+
+        foreach ($queen_positions as $key => $val) {
+            if ($val != "") {
+                $position = explode(',', $val);
+                foreach ($GLOBALS['OFFSETS'] as $pq) {
+                    $surroundingPosition = ($pq[0] + $position[0]) . ',' . ($pq[1] + $position[1]);
+                    if (!array_key_exists($surroundingPosition, $board)) {
+                        if ($key == 0) {
+                            $whiteSurrounded = false;
+                        } else {
+                            $blackSurrounded = false;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        return [$whiteSurrounded, $blackSurrounded];
+    }
+
+    function must_player_pass_turn($playPositions, $movePositions): bool {
+        if (empty($playPositions) && empty($movePositions)) {
+            return true;
+        }
         return false;
     }
 

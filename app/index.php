@@ -5,6 +5,13 @@
     include_once 'game_manager/game_manager.php';
     include_once 'database.php';
 
+    include_once 'insects/insect.php';
+    include_once 'insects/beetle.php';
+    include_once 'insects/queenBee.php';
+    include_once 'insects/spider.php';
+    include_once 'insects/antSoldier.php';
+    include_once 'insects/grasshopper.php';
+
     $util = new hive_util();
     $database = new database();
     $db_connection = $database->connect_to_database();
@@ -30,8 +37,15 @@
     $movePositions = [];
     $playPositions = [];
 
-    if ($game_manager->check_for_win()) {
-
+    if (count($board) > 2) {
+        $surroundedValues = $game_manager->check_for_win($board);
+        if ($surroundedValues[0] && $surroundedValues[1]) {
+            echo "Gelijkspel!";
+        } else if ($surroundedValues[0]) {
+            echo "Zwart wint!";
+        } else if ($surroundedValues[1]) {
+            echo "Wit wint!";
+        }
     }
 
     $playableTiles = $game_manager->get_playable_tiles($hand, $player);
@@ -39,6 +53,10 @@
     $playAndMovePositions = $game_manager->get_play_and_move_positions($board, $player);
     $playPositions = $playAndMovePositions[0];
     $movePositions = $playAndMovePositions[1];
+    $mustPassTurn = false;
+
+
+    $mustPassTurn = $game_manager->must_player_pass_turn($playPositions, $movePositions);
 ?>
 <!DOCTYPE html>
 <html>
@@ -140,7 +158,7 @@
 
         <!---------------- PASS ---------------->
         <form method="post" action="index.php">
-            <input type="submit" name="pass" value="Pass" disabled>
+            <input type="submit" name="pass" value="Pass" <?php if ($mustPassTurn){ echo "disabled"; } ?>>
         </form>
 
         <!---------------- RESTART ---------------->

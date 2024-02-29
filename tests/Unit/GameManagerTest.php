@@ -67,6 +67,82 @@ final class GameManagerTest extends TestCase {
         $this->assertSame($expected, $result);
     }
 
+    public function test_player_wins() {
+        $board = [
+            "0,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "Q"
+                ]
+            ],
+            "0,1" => [
+                0 => [
+                    0 => 1,
+                    1 => "B"
+                ]
+            ],
+            "0,-1" => [
+                0 => [
+                    0 => 0,
+                    1 => "B"
+                ]
+            ],
+            "-1,1" => [
+                0 => [
+                    0 => 1,
+                    1 => "Q"
+                ]
+            ],
+            "1,-1" => [
+                0 => [
+                    0 => 0,
+                    1 => "S"
+                ]
+            ],
+            "-1,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "B"
+                ]
+            ],
+            "1,0" => [
+                0 => [
+                    0 => 1,
+                    1 => "B"
+                ]
+            ]
+        ];
+        $result = $this->game_manager->check_for_win($board);
+
+        $this->assertTrue($result[0]);
+    }
+
+    public function test_player_must_pass_turn() {
+        $playPositions = [];
+        $movePositions = [];
+
+        $this->assertTrue($this->game_manager->must_player_pass_turn($playPositions, $movePositions));
+    }
+
+    public function test_player_must_play() {
+        $playPositions = [
+            "0,0"
+        ];
+        $movePositions = [];
+
+        $this->assertFalse($this->game_manager->must_player_pass_turn($playPositions, $movePositions));
+    }
+
+    public function test_player_must_move() {
+        $playPositions = [
+        ];
+        $movePositions = [
+            "0,0"
+        ];
+
+        $this->assertFalse($this->game_manager->must_player_pass_turn($playPositions, $movePositions));
+    }
+
     public function test_undo_play() {
         $getPreviousMoveReturnResult = [
             0 => "280",
