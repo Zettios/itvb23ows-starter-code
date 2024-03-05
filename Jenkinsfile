@@ -4,11 +4,7 @@ pipeline {
 	    stage('Setup') {
             steps {
                 script {
-                    buildDockerCompose = "docker-compose -f docker-compose.yml build"
-                    dockerComposeUp = "docker-compose -f docker-compose.yml up -d"
-
-                    sh "${buildDockerCompose}"
-                    sh "${dockerComposeUp}"
+                    sh "docker-compose up --build -d "
                 }
             }
         }
@@ -36,6 +32,16 @@ pipeline {
                 }
             }
         }
-
+    }
+    post {
+        always {
+            sh "docker-compose down"
+        }
+        success {
+            echo "Build successful"
+        }
+        failure {
+            echo "Build failed, see console for the details"
+        }
     }
 }
