@@ -19,7 +19,6 @@
 
                         if (!array_key_exists($surroundPositions, $board)) {
                             $movePositions[] = $surroundPositions;
-                            echo "Surround position is: ".$surroundPositions;
                             $foundOpenSpace = true;
                         }
                     }

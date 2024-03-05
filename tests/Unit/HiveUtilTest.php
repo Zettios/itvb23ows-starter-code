@@ -89,7 +89,6 @@ final class HiveUtilTest extends TestCase {
         $this->assertFalse($this->util->is_neighbour("6,6", "8,-4"));
     }
 
-
     public function test_neighbours_are_the_same_color() {
         $expected = '';
         $player = 0;

@@ -1,6 +1,5 @@
 <?php
 
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
@@ -144,16 +143,6 @@ final class GameManagerTest extends TestCase {
     }
 
     public function test_undo_play() {
-        $getPreviousMoveReturnResult = [
-            0 => "280",
-            1 => "73",
-            2 => "play",
-            3 => "Q",
-            4 => "1,0",
-            5 => "279",
-            6 => 'a:3:{i:0;a:2:{i:0;a:5:{s:1:"Q";i:0;s:1:"B";i:2;s:1:"S";i:2;s:1:"A";i:3;s:1:"G";i:3;}i:1;a:5:{s:1:"Q";i:0;s:1:"B";i:2;s:1:"S";i:2;s:1:"A";i:3;s:1:"G";i:3;}}i:1;a:2:{s:3:"0,0";a:1:{i:0;a:2:{i:0;i:0;i:1;s:1:"Q";}}s:3:"1,0";a:1:{i:0;a:2:{i:0;i:1;i:1;s:1:"Q";}}}i:2;i:0;}',
-        ];
-        $this->database_stub ->method('get_previous_move')->willReturn($getPreviousMoveReturnResult);
         $expected = [
             "0,0" => [
                 0 => [
@@ -164,6 +153,22 @@ final class GameManagerTest extends TestCase {
         ];
         $expectedPlayer = 0;
         $_SESSION['last_move'] = -1;
+        $_SESSION['hand'] = [0 => ["Q" => 0, "B" => 2, "S" => 3, "A" => 3, "G" => 3],
+                             1 => ["Q" => 1, "B" => 2, "S" => 3, "A" => 3, "G" => 3]];
+        $_SESSION['board'] = $expected;
+        $_SESSION['player'] = 0;
+        $_SESSION['spider_moves'] = [];
+        $_SESSION['last_move'] = -1;
+        $getPreviousMoveReturnResult = [
+            0 => "280",
+            1 => "73",
+            2 => "play",
+            3 => "Q",
+            4 => "1,0",
+            5 => "279",
+            6 => $this->game_manager->get_game_state(),
+        ];
+        $this->database_stub ->method('get_previous_move')->willReturn($getPreviousMoveReturnResult);
 
         $this->game_manager->undo_move($_SESSION['last_move'], $this->mysql_conn_stub);
         $this->assertSame($expected, $_SESSION['board']);
@@ -171,16 +176,6 @@ final class GameManagerTest extends TestCase {
     }
 
     public function test_undo_move() {
-        $getPreviousMoveReturnResult = [
-            0 => "283",
-            1 => "74",
-            2 => "move",
-            3 => "0,0",
-            4 => "0,1",
-            5 => "282",
-            6 => 'a:3:{i:0;a:2:{i:0;a:5:{s:1:"Q";i:0;s:1:"B";i:2;s:1:"S";i:2;s:1:"A";i:3;s:1:"G";i:3;}i:1;a:5:{s:1:"Q";i:0;s:1:"B";i:2;s:1:"S";i:2;s:1:"A";i:3;s:1:"G";i:3;}}i:1;a:2:{s:3:"0,0";a:1:{i:0;a:2:{i:0;i:0;i:1;s:1:"Q";}}s:3:"1,0";a:1:{i:0;a:2:{i:0;i:1;i:1;s:1:"Q";}}}i:2;i:1;}',
-        ];
-        $this->database_stub ->method('get_previous_move')->willReturn($getPreviousMoveReturnResult);
         $expected = [
             "0,0" => [
                 0 => [
@@ -197,6 +192,21 @@ final class GameManagerTest extends TestCase {
         ];
         $expectedPlayer = 0;
         $_SESSION['last_move'] = -1;
+        $_SESSION['hand'] = [];
+        $_SESSION['board'] = $expected;
+        $_SESSION['player'] = 0;
+        $_SESSION['spider_moves'] = [];
+        $getPreviousMoveReturnResult = [
+            0 => "283",
+            1 => "74",
+            2 => "move",
+            3 => "0,0",
+            4 => "0,1",
+            5 => "282",
+            6 => $this->game_manager->get_game_state(),
+        ];
+
+        $this->database_stub ->method('get_previous_move')->willReturn($getPreviousMoveReturnResult);
 
         $this->game_manager->undo_move($_SESSION['last_move'], $this->mysql_conn_stub);
         $this->assertSame($expected, $_SESSION['board']);
@@ -206,7 +216,7 @@ final class GameManagerTest extends TestCase {
     public function test_calculate_correct_play_and_move_values() {
         $expectedPlayPositions = ["0,-1", "-1,0", "-1,1"];
         $expectedMovePositions = ["0,1", "0,-1", "-1,0", "-1,1", "1,-1"];
-
+        $_SESSION['spider_moves'] = [];
         $player = 0;
         $board = [
             "0,0" => [
@@ -523,5 +533,163 @@ final class GameManagerTest extends TestCase {
 
         $this->game_manager->play_insect(null);
         self::assertEquals($expected, $_SESSION['error']);
+    }
+
+    public function test_move_spider_to_three_spaces() {
+        $_POST['from'] = "-1,0";
+        $_POST['to'] = "0,-1";
+        $_SESSION['game_id'] = 0;
+        $_SESSION['last_move'] = 0;
+        $_SESSION['hand'] = [0 => ["Q" => 0, "B" => 2, "S" => 1, "A" => 3, "G" => 3],
+            1 => ["Q" => 0, "B" => 1, "S" => 2, "A" => 3, "G" => 3]];
+        $_SESSION['player'] = 0; //white
+        $_SESSION['spider_moves'] = [];
+        $_SESSION['board'] = [
+            "0,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "Q"
+                ]
+            ],
+            "1,0" => [
+                0 => [
+                    0 => 1,
+                    1 => "Q"
+                ]
+            ],
+            "-1,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "S"
+                ]
+            ],
+            "2,0" => [
+                0 => [
+                    0 => 1,
+                    1 => "B"
+                ]
+            ],
+        ];
+
+        $expectedBoard = [
+            "0,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "Q"
+                ]
+            ],
+            "1,0" => [
+                0 => [
+                    0 => 1,
+                    1 => "Q"
+                ]
+            ],
+            "0,-1" => [
+                0 => [
+                    0 => 0,
+                    1 => "S"
+                ]
+            ],
+            "2,0" => [
+                0 => [
+                    0 => 1,
+                    1 => "B"
+                ]
+            ],
+        ];
+        $expectedSpiderMoves = [
+            0 => [
+                0 => "-1,0",
+                1 => "0,-1"
+            ]
+        ];
+
+        $this->game_manager->move_insect($this->mysql_conn_stub);
+        $this->assertFalse(isset($_SESSION['error']));
+        $this->assertEqualsCanonicalizing($expectedBoard, $_SESSION['board']);
+        $this->assertEqualsCanonicalizing($expectedSpiderMoves, $_SESSION['spider_moves']);
+        $this->assertEquals(0, $_SESSION['player']);
+        $this->assertCount(1, $_SESSION['spider_moves']);
+
+        $_POST['from'] = "0,-1";
+        $_POST['to'] = "1,-1";
+        $expectedBoard = [
+            "0,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "Q"
+                ]
+            ],
+            "1,0" => [
+                0 => [
+                    0 => 1,
+                    1 => "Q"
+                ]
+            ],
+            "1,-1" => [
+                0 => [
+                    0 => 0,
+                    1 => "S"
+                ]
+            ],
+            "2,0" => [
+                0 => [
+                    0 => 1,
+                    1 => "B"
+                ]
+            ],
+        ];
+        $expectedSpiderMoves = [
+            0 => [
+                0 => "-1,0",
+                1 => "0,-1"
+            ],
+            1 => [
+                0 => "0,-1",
+                1 => "1,-1"
+            ]
+        ];
+        $this->game_manager->move_insect($this->mysql_conn_stub);
+        $this->assertFalse(isset($_SESSION['error']));
+        $this->assertEqualsCanonicalizing($expectedBoard, $_SESSION['board']);
+        $this->assertEqualsCanonicalizing($expectedSpiderMoves, $_SESSION['spider_moves']);
+        $this->assertEquals(0, $_SESSION['player']);
+        $this->assertCount(2, $_SESSION['spider_moves']);
+
+
+        $_POST['from'] = "1,-1";
+        $_POST['to'] = "2,-1";
+        $expectedBoard = [
+            "0,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "Q"
+                ]
+            ],
+            "1,0" => [
+                0 => [
+                    0 => 1,
+                    1 => "Q"
+                ]
+            ],
+            "2,-1" => [
+                0 => [
+                    0 => 0,
+                    1 => "S"
+                ]
+            ],
+            "2,0" => [
+                0 => [
+                    0 => 1,
+                    1 => "B"
+                ]
+            ],
+        ];
+        $this->game_manager->move_insect($this->mysql_conn_stub);
+        $this->assertFalse(isset($_SESSION['error']));
+        $this->assertEqualsCanonicalizing($expectedBoard, $_SESSION['board']);
+        $this->assertEqualsCanonicalizing([], $_SESSION['spider_moves']);
+        $this->assertEquals(1, $_SESSION['player']);
+        $this->assertCount(0, $_SESSION['spider_moves']);
     }
 }

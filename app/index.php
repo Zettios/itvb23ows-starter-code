@@ -53,9 +53,6 @@
     $playAndMovePositions = $game_manager->get_play_and_move_positions($board, $player);
     $playPositions = $playAndMovePositions[0];
     $movePositions = $playAndMovePositions[1];
-    $mustPassTurn = false;
-
-
     $mustPassTurn = $game_manager->must_player_pass_turn($playPositions, $movePositions);
 ?>
 <!DOCTYPE html>
@@ -118,30 +115,38 @@
 
         <!---------------- PLAY INSECT ---------------->
         <form method="post" action="index.php">
-            <select name="piece" <?php if (array_sum($hand[$player]) <= '0'){ echo "disabled"; } ?>>
+            <select name="piece" <?php
+            if (array_sum($hand[$player]) <= '0' || count($_SESSION['spider_moves']) >= 1){ echo "disabled"; } ?>>
                 <?php
                     foreach ($playableTiles as $key => $tile) {
                         echo "<option value=\"$tile\">$tile</option>";
                     }
                 ?>
             </select>
-            <select name="to" <?php if (array_sum($hand[$player]) <= '0'){ echo "disabled"; } ?>>
+            <select name="to" <?php
+            if (array_sum($hand[$player]) <= '0' || count($_SESSION['spider_moves']) >= 1){ echo "disabled"; } ?>>
                 <?php
                     foreach ($playPositions as $boardPosition) {
                         echo "<option value=\"$boardPosition\">$boardPosition</option>";
                     }
                 ?>
             </select>
-            <input type="submit" name="play" value="Play" <?php if (array_sum($hand[$player]) <= '0'){ echo "disabled"; } ?>>
+            <input type="submit" name="play" value="Play" <?php
+            if (array_sum($hand[$player]) <= '0'  || count($_SESSION['spider_moves']) >= 1){ echo "disabled"; } ?>>
         </form>
 
         <!---------------- MOVE INSECT ---------------->
         <form method="post" action="index.php">
             <select name="from" <?php if ($hand[$player]["Q"] >= 1) { echo "disabled"; } ?>>
                 <?php
-                    foreach (array_keys($board) as $boardPosition) {
-                        if ($board[$boardPosition][0][0] == $player) {
-                            echo "<option value=\"$boardPosition\">$boardPosition</option>";
+                    if (count($_SESSION['spider_moves']) >= 1) {
+                        $val = $_SESSION['spider_moves'][array_key_last($_SESSION['spider_moves'])][1];
+                        echo "<option value=\"$val\">$val</option>";
+                    } else {
+                        foreach (array_keys($board) as $boardPosition) {
+                            if ($board[$boardPosition][count($board[$boardPosition])-1][0] == $player) {
+                                echo "<option value=\"$boardPosition\">$boardPosition</option>";
+                            }
                         }
                     }
                 ?>
