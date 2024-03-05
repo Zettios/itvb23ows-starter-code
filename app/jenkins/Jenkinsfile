@@ -1,25 +1,22 @@
 pipeline {
-    agent none
-    options {
-        skipStagesAfterUnstable()
-    }
+    agent any
     stages {
-	stage('Checkout') {
-	        agent any
+	    stage('Setup') {
             steps {
                 checkout scm
             }
         }
-        stage('Build') {
-            agent { docker { image 'php:8.3.3-alpine3.19' } }
+        stage('Test') {
             steps {
-                echo 'Building'
-		sh 'composer install'
-		sh 'php --version'
-		sh './vendor/bin/phpunit'
+                script {
+                    docker.image('composer:lts').inside {
+                        sh 'composer install'
+                        sh 'vendor/bin/phpunit src/.'
+                    }
+                }
             }
         }
-        stage('Test') {
+        stage('Execute SonarQube') {
             agent {
                 label '!windows'
             }
@@ -31,12 +28,6 @@ pipeline {
                 withSonarQubeEnv('SonarQube_Hive') {
                     sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=sqp_95ec0aa97b17a116a718b1ce1f5240e2dc006d9e"
                 }
-            }
-        }
-        stage('Deploy') {
-            agent any
-            steps {
-                echo 'Deploying'
             }
         }
     }
