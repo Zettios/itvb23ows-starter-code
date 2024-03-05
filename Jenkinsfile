@@ -1,10 +1,15 @@
 pipeline {
     agent any
+
+    environment {
+        DOCKER_COMPOSE_PATH = 'C:/Program Files/Docker/Docker/resources/bin'
+    }
+
     stages {
 	    stage('Setup') {
             steps {
                 script {
-                    sh "docker-compose -f docker-compose.yml up"
+                    sh DOCKER_COMPOSE_PATH.'/docker-compose -f docker-compose.yml up'
                 }
             }
         }
