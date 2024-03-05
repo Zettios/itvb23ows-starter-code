@@ -9,6 +9,8 @@ pipeline {
 	    stage('Setup') {
             steps {
                 script {
+                    echo 'docker-compose --version'
+                    echo 'which docker-compose'
                     sh DOCKER_COMPOSE_PATH.'/docker-compose -f docker-compose.yml up'
                 }
             }
