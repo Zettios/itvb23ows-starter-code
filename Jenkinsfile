@@ -4,7 +4,7 @@ pipeline {
 	    stage('Setup') {
             steps {
                 script {
-                    sh "docker-compose up --build -d "
+                    sh "docker-compose -f docker-compose.yml up"
                 }
             }
         }
