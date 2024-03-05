@@ -11,12 +11,12 @@ pipeline {
             }
         }
         stage('Build') {
-            agent { docker 'php' }
+            agent { docker { image 'php:8.3.3-alpine3.19' } }
             steps {
                 echo 'Building'
-		        //sh 'composer install'
-		        sh 'php --version'
-		        sh './vendor/bin/phpunit'
+		sh 'composer install'
+		sh 'php --version'
+		sh './vendor/bin/phpunit'
             }
         }
         stage('Test') {
