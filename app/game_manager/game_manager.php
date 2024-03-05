@@ -77,7 +77,6 @@ class game_manager {
                 return [[], array_unique($spiderMoveLocations)];
             }
 
-
             foreach (array_keys($board) as $boardPosition) {
                 if ($board[$boardPosition][count($board[$boardPosition])-1][0] == $player) {
                     $tile = array_pop($board[$boardPosition]);
@@ -99,6 +98,7 @@ class game_manager {
                             $grasshopperPositions = array_merge($grasshopperPositions, $grasshopper->calculate_move_position($boardPosition, $board));
                             break;
                     }
+
                     if (isset($board[$boardPosition])) {
                         array_push($board[$boardPosition], $tile);
                     } else {
@@ -110,11 +110,6 @@ class game_manager {
                         $surroundingPosition = ($pq[0] + $boardPositionAsArray[0]).','.($pq[1] + $boardPositionAsArray[1]);
                         if (!array_key_exists($surroundingPosition, $board) && $this->util->neighbours_are_same_color_new($player, $surroundingPosition, $board)) {
                             $playPositions[] = $surroundingPosition;
-                        }
-
-                        $movePositions[] = $surroundingPosition;
-                        if (array_key_exists($surroundingPosition, $board) && $board[$boardPosition][count($board[$boardPosition])-1][1] != "B") {
-                            array_pop($movePositions);
                         }
                     }
                 }
@@ -134,6 +129,12 @@ class game_manager {
             print_r($grasshopperPositions);
             echo "</pre>";
         }
+
+        $movePositions = array_merge($queenPositions,
+                                        $beetlePositions,
+                                        $spiderPositions,
+                                        $antPositions,
+                                        $grasshopperPositions);
 
         return [array_unique($playPositions), array_unique($movePositions)];
     }

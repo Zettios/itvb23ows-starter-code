@@ -11,10 +11,12 @@ pipeline {
             }
         }
         stage('Build') {
-            agent any
+            agent { docker 'php' }
             steps {
                 echo 'Building'
 		        //sh 'composer install'
+		        sh 'php --version'
+		        sh './vendor/bin/phpunit'
             }
         }
         stage('Test') {
