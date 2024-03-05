@@ -3,7 +3,13 @@ pipeline {
     stages {
 	    stage('Setup') {
             steps {
-                echo 'Do some setup'
+                script {
+                    buildDockerCompose = "docker-compose -f docker-compose.yml build"
+                    dockerComposeUp = "docker-compose -f docker-compose.yml up -d"
+
+                    sh "${buildDockerCompose}"
+                    sh "${dockerComposeUp}"
+                }
             }
         }
         stage('Execute SonarQube scan') {
@@ -23,8 +29,8 @@ pipeline {
         stage('Execute PHPUnit Tests') {
             steps {
                 script {
-                    docker.image('composer:lts').inside {
-                        sh 'composer install'
+                    docker.image('itvb23ows-starter-code-app:latest').inside {
+                        sh 'php --version'
                         sh 'vendor/bin/phpunit src/.'
                     }
                 }
