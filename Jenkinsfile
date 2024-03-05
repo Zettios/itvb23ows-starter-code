@@ -3,7 +3,7 @@ pipeline {
     stages {
 	    stage('Setup') {
             steps {
-                checkout scm
+                echo 'Do some setup'
             }
         }
         stage('Execute SonarQube scan') {
