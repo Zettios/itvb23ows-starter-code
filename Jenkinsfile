@@ -1,12 +1,10 @@
 pipeline {
     agent any
 
-    environment {
-    }
-
     stages {
 	    stage('Setup') {
             steps {
+                echo 'Setup fase'
             }
         }
         stage('Execute SonarQube scan') {
