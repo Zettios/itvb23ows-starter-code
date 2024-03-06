@@ -1,12 +1,14 @@
-version: "3"
+version: "3.8"
 
 networks:
   docker:
+    driver: bridge
 
 volumes:
   hive-db:
-  jenkins-data:
-  jenkins-docker-certs:
+  jenkins_home:
+  dind-certs-ca:
+  dind-certs-client:
   sonarqube_conf:
   sonarqube_data:
   sonarqube_extensions:
@@ -33,41 +35,30 @@ services:
           - db
 
     jenkins:
-        build: ./app/jenkins/
-        container_name: jenkins
-        restart: always
-        privileged: true
-        networks:
-          - docker
-        user: root
-        volumes:
-          - jenkins-data:/var/jenkins_home
-          - jenkins-docker-certs:/certs/client:ro
-        environment:
-          - DOCKER_HOST=tcp://docker:2376
-          - DOCKER_CERT_PAT=/certs/client
-          - DOCKER_TLS_VERIFY=1
-        ports:
-          - "8080:8080"
-          - "50000:50000"
+      image: jenkins/jenkins:lts
+      container_name: jenkins
+      ports:
+        - "8080:8080"
+        - "50000:50000"
+      volumes:
+        - jenkins_home:/var/jenkins_home
+      networks:
+        - docker
 
     dind:
-      image: docker:dind
+      image: docker:19.03.7-dind
+      container_name: dind
+      restart: unless-stopped
       privileged: true
-      restart: always
-      networks:
-        docker:
-          aliases:
-            - docker
-      tty: true
-      volumes:
-        - jenkins-data:/var/jenkins_home
-        - jenkins-docker-certs:/certs/client
-        - $HOME:/home
       environment:
         - DOCKER_TLS_CERTDIR=/certs
-      ports:
-        - "2376:2376"
+      volumes:
+        - dind-certs-ca:/certs/ca
+        - dind-certs-client:/certs/client
+      networks:
+        - docker
+      expose:
+        - 2375
 
     sonarqube:
       image: sonarqube:latest
