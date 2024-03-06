@@ -1,4 +1,17 @@
 version: "3"
+
+networks:
+  docker:
+
+volumes:
+  hive-db:
+  jenkins-data:
+  jenkins-docker-certs:
+  sonarqube_conf:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_bundled-plugins:
+
 services:
     db:
       build: ./app/db/
@@ -22,8 +35,10 @@ services:
     jenkins:
         build: ./app/jenkins/
         container_name: jenkins
-        restart: on-failure
+        restart: always
         privileged: true
+        networks:
+          - docker
         user: root
         volumes:
           - jenkins-data:/var/jenkins_home
@@ -34,11 +49,34 @@ services:
           - DOCKER_TLS_VERIFY=1
         ports:
           - "8080:8080"
+          - "50000:50000"
+
+    dind:
+      image: docker:dind
+      privileged: true
+      restart: always
+      networks:
+        docker:
+          aliases:
+            - docker
+      tty: true
+      volumes:
+        - jenkins-data:/var/jenkins_home
+        - jenkins-docker-certs:/certs/client
+        - $HOME:/home
+      environment:
+        - DOCKER_TLS_CERTDIR=/certs
+      ports:
+        - "2376:2376"
 
     sonarqube:
       image: sonarqube:latest
       container_name: sonarqube_hive
-      restart: unless-stopped
+      restart: always
+      networks:
+        docker:
+          aliases:
+            - docker
       volumes:
         - sonarqube_conf:/opt/sonarqube/conf
         - sonarqube_data:/opt/sonarqube/data
@@ -48,12 +86,3 @@ services:
         - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
       ports:
         - "9000:9000"
-
-volumes:
-  hive-db:
-  jenkins-data:
-  jenkins-docker-certs:
-  sonarqube_conf:
-  sonarqube_data:
-  sonarqube_extensions:
-  sonarqube_bundled-plugins:
