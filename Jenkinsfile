@@ -40,7 +40,7 @@ pipeline {
     }
     post {
         always {
-            sh "docker-compose down"
+            echo 'Done'
         }
         success {
             echo "Build successful"

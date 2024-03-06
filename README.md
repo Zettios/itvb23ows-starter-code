@@ -39,3 +39,6 @@ Om tests te runnen:
 ```
 ./vendor/bin/phpunit
 ```
+
+
+docker exec -it jenkins ping docker
