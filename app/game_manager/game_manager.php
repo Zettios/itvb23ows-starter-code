@@ -63,14 +63,9 @@ class game_manager {
             }
         } else {
             if (count($_SESSION['spider_moves']) >= 1) {
-//                echo "<pre>";
                 $spiderCurrentLocation = $_SESSION['spider_moves'][count($_SESSION['spider_moves'])-1][1];
                 $tile = array_pop($board[$spiderCurrentLocation]);
                 $spiderMoveLocations = $spider->calculate_move_position($spiderCurrentLocation, $board);
-
-//                echo "Moving spider positions: <br>";
-//                print_r($spiderMoveLocations);
-//                echo "</pre>";
 
                 if (isset($board[$spiderCurrentLocation])) {
                     array_push($board[$spiderCurrentLocation], $tile);
@@ -118,20 +113,6 @@ class game_manager {
                     }
                 }
             }
-
-
-//            echo "<pre>";
-//            echo "Queen:<br>";
-//            print_r($queenPositions);
-//            echo "<br><br>Beetle:<br>";
-//            print_r($beetlePositions);
-//            echo "<br><br>Spider:<br>";
-//            print_r($spiderPositions);
-//            echo "<br><br>Ant:<br>";
-//            print_r($antPositions);
-//            echo "<br><br>Grasshopper:<br>";
-//            print_r($grasshopperPositions);
-//            echo "</pre>";
         }
 
         $movePositions = array_merge($queenPositions,

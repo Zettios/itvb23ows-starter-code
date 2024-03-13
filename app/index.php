@@ -52,12 +52,6 @@
         }
     }
 
-    echo "<pre>";
-    print_r($board);
-    echo "<br>";
-    print_r($_SESSION['last_made_moves']);
-    echo "</pre>";
-
     $playableTiles = $game_manager->get_playable_tiles($hand, $player);
 
     $playAndMovePositions = $game_manager->get_play_and_move_positions($board, $player);
