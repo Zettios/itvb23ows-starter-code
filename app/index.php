@@ -37,6 +37,7 @@
     $movePositions = [];
     $playPositions = [];
     $gameOver = false;
+    $mustPassTurn = false;
 
     if (count($board) > 2) {
         $winnerValues = $game_manager->check_for_win($board);
@@ -57,7 +58,9 @@
     $playAndMovePositions = $game_manager->get_play_and_move_positions($board, $player);
     $playPositions = $playAndMovePositions[0];
     $movePositions = $playAndMovePositions[1];
-    $mustPassTurn = $game_manager->must_player_pass_turn($playPositions, $movePositions);
+    if (count($board) > 2) {
+        $mustPassTurn = $game_manager->must_player_pass_turn($playPositions, $movePositions);
+    }
 ?>
 <!DOCTYPE html>
 <html>
@@ -120,7 +123,7 @@
         <!---------------- PLAY INSECT ---------------->
         <form method="post" action="index.php">
             <select name="piece" <?php
-            if (array_sum($hand[$player]) <= '0' || count($_SESSION['spider_moves']) >= 1 || $gameOver){ echo "disabled"; } ?>>
+            if (array_sum($hand[$player]) <= '0' || count($_SESSION['spider_moves']) >= 1 || $gameOver || $mustPassTurn){ echo "disabled"; } ?>>
                 <?php
                     foreach ($playableTiles as $key => $tile) {
                         echo "<option value=\"$tile\">$tile</option>";
@@ -128,7 +131,7 @@
                 ?>
             </select>
             <select name="to" <?php
-            if (array_sum($hand[$player]) <= '0' || count($_SESSION['spider_moves']) >= 1 || $gameOver){ echo "disabled"; } ?>>
+            if (array_sum($hand[$player]) <= '0' || count($_SESSION['spider_moves']) >= 1 || $gameOver || $mustPassTurn){ echo "disabled"; } ?>>
                 <?php
                     foreach ($playPositions as $boardPosition) {
                         echo "<option value=\"$boardPosition\">$boardPosition</option>";
@@ -136,12 +139,12 @@
                 ?>
             </select>
             <input type="submit" name="play" value="Play" <?php
-            if (array_sum($hand[$player]) <= '0'  || count($_SESSION['spider_moves']) >= 1 || $gameOver){ echo "disabled"; } ?>>
+            if (array_sum($hand[$player]) <= '0'  || count($_SESSION['spider_moves']) >= 1 || $gameOver || $mustPassTurn){ echo "disabled"; } ?>>
         </form>
 
         <!---------------- MOVE INSECT ---------------->
         <form method="post" action="index.php">
-            <select name="from" <?php if ($hand[$player]["Q"] >= 1 || $gameOver) { echo "disabled"; } ?>>
+            <select name="from" <?php if ($hand[$player]["Q"] >= 1 || $gameOver || $mustPassTurn) { echo "disabled"; } ?>>
                 <?php
                     if (count($_SESSION['spider_moves']) >= 1) {
                         $val = $_SESSION['spider_moves'][array_key_last($_SESSION['spider_moves'])][1];
@@ -155,19 +158,19 @@
                     }
                 ?>
             </select>
-            <select name="to" <?php if ($hand[$player]["Q"] >= 1 || $gameOver) { echo "disabled"; } ?>>
+            <select name="to" <?php if ($hand[$player]["Q"] >= 1 || $gameOver || $mustPassTurn) { echo "disabled"; } ?>>
                 <?php
                     foreach ($movePositions as $boardPosition) {
                         echo "<option value=\"$boardPosition\">$boardPosition</option>";
                     }
                 ?>
             </select>
-            <input type="submit" name="move" value="Move" <?php if ($hand[$player]["Q"] >= 1 || $gameOver) { echo "disabled"; } ?>>
+            <input type="submit" name="move" value="Move" <?php if ($hand[$player]["Q"] >= 1 || $gameOver || $mustPassTurn) { echo "disabled"; } ?>>
         </form>
 
         <!---------------- PASS ---------------->
         <form method="post" action="index.php">
-            <input type="submit" name="pass" value="Pass" <?php if ($mustPassTurn || $gameOver){ echo "disabled"; } ?>>
+            <input type="submit" name="pass" value="Pass" <?php if ($gameOver || !$mustPassTurn){ echo "disabled"; } ?>>
         </form>
 
         <!---------------- RESTART ---------------->

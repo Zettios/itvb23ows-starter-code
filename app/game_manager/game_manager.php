@@ -329,7 +329,7 @@ class game_manager {
             }
         }
 
-        if ($whiteSameIdCounter >= 6 && $blackSameIdCounter >= 6) {
+        if ($whiteSameIdCounter >= 5 && $blackSameIdCounter >= 5) {
             return true;
         }
 
