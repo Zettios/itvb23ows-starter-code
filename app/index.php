@@ -36,17 +36,27 @@
     $hand = $_SESSION['hand'];
     $movePositions = [];
     $playPositions = [];
+    $gameOver = false;
 
     if (count($board) > 2) {
-        $surroundedValues = $game_manager->check_for_win($board);
-        if ($surroundedValues[0] && $surroundedValues[1]) {
+        $winnerValues = $game_manager->check_for_win($board);
+        if ($winnerValues[0] && $winnerValues[1]) {
             echo "Gelijkspel!";
-        } else if ($surroundedValues[0]) {
-            echo "Zwart wint!";
-        } else if ($surroundedValues[1]) {
+            $gameOver = true;
+        } else if ($winnerValues[0]) {
             echo "Wit wint!";
+            $gameOver = true;
+        } else if ($winnerValues[1]) {
+            echo "Zwart wint!";
+            $gameOver = true;
         }
     }
+
+    echo "<pre>";
+    print_r($board);
+    echo "<br>";
+    print_r($_SESSION['last_made_moves']);
+    echo "</pre>";
 
     $playableTiles = $game_manager->get_playable_tiles($hand, $player);
 
@@ -116,7 +126,7 @@
         <!---------------- PLAY INSECT ---------------->
         <form method="post" action="index.php">
             <select name="piece" <?php
-            if (array_sum($hand[$player]) <= '0' || count($_SESSION['spider_moves']) >= 1){ echo "disabled"; } ?>>
+            if (array_sum($hand[$player]) <= '0' || count($_SESSION['spider_moves']) >= 1 || $gameOver){ echo "disabled"; } ?>>
                 <?php
                     foreach ($playableTiles as $key => $tile) {
                         echo "<option value=\"$tile\">$tile</option>";
@@ -124,7 +134,7 @@
                 ?>
             </select>
             <select name="to" <?php
-            if (array_sum($hand[$player]) <= '0' || count($_SESSION['spider_moves']) >= 1){ echo "disabled"; } ?>>
+            if (array_sum($hand[$player]) <= '0' || count($_SESSION['spider_moves']) >= 1 || $gameOver){ echo "disabled"; } ?>>
                 <?php
                     foreach ($playPositions as $boardPosition) {
                         echo "<option value=\"$boardPosition\">$boardPosition</option>";
@@ -132,12 +142,12 @@
                 ?>
             </select>
             <input type="submit" name="play" value="Play" <?php
-            if (array_sum($hand[$player]) <= '0'  || count($_SESSION['spider_moves']) >= 1){ echo "disabled"; } ?>>
+            if (array_sum($hand[$player]) <= '0'  || count($_SESSION['spider_moves']) >= 1 || $gameOver){ echo "disabled"; } ?>>
         </form>
 
         <!---------------- MOVE INSECT ---------------->
         <form method="post" action="index.php">
-            <select name="from" <?php if ($hand[$player]["Q"] >= 1) { echo "disabled"; } ?>>
+            <select name="from" <?php if ($hand[$player]["Q"] >= 1 || $gameOver) { echo "disabled"; } ?>>
                 <?php
                     if (count($_SESSION['spider_moves']) >= 1) {
                         $val = $_SESSION['spider_moves'][array_key_last($_SESSION['spider_moves'])][1];
@@ -151,19 +161,19 @@
                     }
                 ?>
             </select>
-            <select name="to" <?php if ($hand[$player]["Q"] >= 1) { echo "disabled"; } ?>>
+            <select name="to" <?php if ($hand[$player]["Q"] >= 1 || $gameOver) { echo "disabled"; } ?>>
                 <?php
                     foreach ($movePositions as $boardPosition) {
                         echo "<option value=\"$boardPosition\">$boardPosition</option>";
                     }
                 ?>
             </select>
-            <input type="submit" name="move" value="Move" <?php if ($hand[$player]["Q"] >= 1) { echo "disabled"; } ?>>
+            <input type="submit" name="move" value="Move" <?php if ($hand[$player]["Q"] >= 1 || $gameOver) { echo "disabled"; } ?>>
         </form>
 
         <!---------------- PASS ---------------->
         <form method="post" action="index.php">
-            <input type="submit" name="pass" value="Pass" <?php if ($mustPassTurn){ echo "disabled"; } ?>>
+            <input type="submit" name="pass" value="Pass" <?php if ($mustPassTurn || $gameOver){ echo "disabled"; } ?>>
         </form>
 
         <!---------------- RESTART ---------------->

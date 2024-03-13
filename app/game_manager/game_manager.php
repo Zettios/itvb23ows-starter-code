@@ -14,6 +14,10 @@ class game_manager {
             1 => ["Q" => 1, "B" => 2, "S" => 2, "A" => 3, "G" => 3]];
         $_SESSION['player'] = 0; //white
         $_SESSION['last_move'] = 0;
+        $_SESSION['last_made_moves'] = [
+            0 => [],
+            1 => []
+        ];
         $_SESSION['spider_moves'] = [];
 
         $db_connection->prepare('INSERT INTO games VALUES ()')->execute();
@@ -59,14 +63,14 @@ class game_manager {
             }
         } else {
             if (count($_SESSION['spider_moves']) >= 1) {
-                echo "<pre>";
+//                echo "<pre>";
                 $spiderCurrentLocation = $_SESSION['spider_moves'][count($_SESSION['spider_moves'])-1][1];
                 $tile = array_pop($board[$spiderCurrentLocation]);
                 $spiderMoveLocations = $spider->calculate_move_position($spiderCurrentLocation, $board);
 
-                echo "Moving spider positions: <br>";
-                print_r($spiderMoveLocations);
-                echo "</pre>";
+//                echo "Moving spider positions: <br>";
+//                print_r($spiderMoveLocations);
+//                echo "</pre>";
 
                 if (isset($board[$spiderCurrentLocation])) {
                     array_push($board[$spiderCurrentLocation], $tile);
@@ -116,18 +120,18 @@ class game_manager {
             }
 
 
-            echo "<pre>";
-            echo "Queen:<br>";
-            print_r($queenPositions);
-            echo "<br><br>Beetle:<br>";
-            print_r($beetlePositions);
-            echo "<br><br>Spider:<br>";
-            print_r($spiderPositions);
-            echo "<br><br>Ant:<br>";
-            print_r($antPositions);
-            echo "<br><br>Grasshopper:<br>";
-            print_r($grasshopperPositions);
-            echo "</pre>";
+//            echo "<pre>";
+//            echo "Queen:<br>";
+//            print_r($queenPositions);
+//            echo "<br><br>Beetle:<br>";
+//            print_r($beetlePositions);
+//            echo "<br><br>Spider:<br>";
+//            print_r($spiderPositions);
+//            echo "<br><br>Ant:<br>";
+//            print_r($antPositions);
+//            echo "<br><br>Grasshopper:<br>";
+//            print_r($grasshopperPositions);
+//            echo "</pre>";
         }
 
         $movePositions = array_merge($queenPositions,
@@ -158,7 +162,8 @@ class game_manager {
         } elseif (array_sum($hand) < 9 && $hand['Q'] >= 1 && $piece != "Q") {
             $_SESSION['error'] = 'Must play queen bee';
         } else {
-            $_SESSION['board'][$to] = [[$_SESSION['player'], $piece]];
+            $tileId = $this->generate_tile_id($player, $piece);
+            $_SESSION['board'][$to] = [[$_SESSION['player'], $piece, $tileId]];
             $_SESSION['hand'][$player][$piece]--;
             $state = $this->get_game_state();
             $_SESSION['player'] = 1 - $_SESSION['player'];
@@ -171,6 +176,10 @@ class game_manager {
                 $_SESSION['last_move'],
                 $state);
         }
+    }
+
+    function generate_tile_id($player, $piece): string {
+        return $player.$piece.rand(1000000, 9999999);
     }
 
     function move_insect($db_connection) {
@@ -262,53 +271,88 @@ class game_manager {
                     }
                 }
 
+                $this->setLastMadeMove($_SESSION['player'], $tile);
+
                 if (empty($_SESSION['spider_moves'])) $_SESSION['player'] = 1 - $_SESSION['player'];
             }
             $_SESSION['board'] = $board;
         }
     }
 
-    function check_for_win($board): array {
-        $whiteSurrounded = true;
-        $blackSurrounded = true;
-
-        $queen_positions = [
-            0 => "",
-            1 => ""
-        ];
-
-        foreach (array_keys($board) as $boardKey) {
-            if (count($board[$boardKey]) > 1) {
-                foreach ($board[$boardKey] as $tile) {
-                    if ($tile[1] == "Q") {
-                        $queen_positions[$tile[0]] = $boardKey;
-                    }
-                }
-            } else {
-                if ($board[$boardKey][0][1] == "Q") {
-                    $queen_positions[$board[$boardKey][0][0]] = $boardKey;
-                }
-            }
+    function setLastMadeMove($player, $tile) {
+        $_SESSION['last_made_moves'][$player][] = $tile[2];
+        if (count($_SESSION['last_made_moves'][$player]) > 6) {
+            array_shift($_SESSION['last_made_moves'][$player]);
         }
+    }
 
-        foreach ($queen_positions as $key => $val) {
-            if ($val != "") {
-                $position = explode(',', $val);
+    function check_for_win($board): array {
+        $whiteWins = false;
+        $blackWins = false;
+        foreach (array_keys($board) as $boardKey) {
+            if ($board[$boardKey][0][1] == "Q") {
+                $player = $board[$boardKey][0][0];
+                $amountOfNeighbours = 0;
+                $position = explode(',', $boardKey);
                 foreach ($GLOBALS['OFFSETS'] as $pq) {
                     $surroundingPosition = ($pq[0] + $position[0]) . ',' . ($pq[1] + $position[1]);
-                    if (!array_key_exists($surroundingPosition, $board)) {
-                        if ($key == 0) {
-                            $whiteSurrounded = false;
-                        } else {
-                            $blackSurrounded = false;
+                    if (array_key_exists($surroundingPosition, $board)) {
+                        $amountOfNeighbours++;
+                    }
+
+                    if ($amountOfNeighbours >= 6) {
+                        if ($player == 0) {
+                            $blackWins = true;
                         }
-                        break;
+                        if ($player == 1) {
+                            $whiteWins = true;
+                        }
                     }
                 }
             }
         }
 
-        return [$whiteSurrounded, $blackSurrounded];
+        if (!$whiteWins && !$blackWins) {
+            if ($this->check_for_stalemate()) {
+                $whiteWins = true;
+                $blackWins = true;
+            }
+        }
+
+        return [$whiteWins, $blackWins];
+    }
+
+    function check_for_stalemate(): bool {
+        if (count($_SESSION['last_made_moves'][0]) <= 2 && count($_SESSION['last_made_moves'][1]) <= 2) {
+            return false;
+        }
+
+        $prevWhiteId = $_SESSION['last_made_moves'][0][0];
+        $whiteSameIdCounter = 0;
+        $prevBlackId = $_SESSION['last_made_moves'][1][0];
+        $blackSameIdCounter = 0;
+
+        foreach (array_slice($_SESSION['last_made_moves'][0], 1) as $key => $val) {
+            if ($val == $prevWhiteId) {
+                $whiteSameIdCounter++;
+            } else {
+                $whiteSameIdCounter = 0;
+            }
+        }
+
+        foreach (array_slice($_SESSION['last_made_moves'][1], 1) as $key => $val) {
+            if ($val == $prevBlackId) {
+                $blackSameIdCounter++;
+            } else {
+                $blackSameIdCounter = 0;
+            }
+        }
+
+        if ($whiteSameIdCounter >= 6 && $blackSameIdCounter >= 6) {
+            return true;
+        }
+
+        return false;
     }
 
     function must_player_pass_turn($playPositions, $movePositions): bool {
@@ -334,7 +378,8 @@ class game_manager {
     }
 
     function get_game_state(): string {
-        return serialize([$_SESSION['hand'], $_SESSION['board'], $_SESSION['player'], $_SESSION['spider_moves']]);
+        return serialize([$_SESSION['hand'], $_SESSION['board'], $_SESSION['player'],
+                          $_SESSION['spider_moves'], $_SESSION['last_made_moves']]);
     }
 
     function set_game_state($result) {
@@ -342,18 +387,14 @@ class game_manager {
         $moveFrom = $result[3];
         $moveTo = $result[4];
         $state = $result[6];
-        list($hand, $board, $player, $_SESSION['spider_moves']) = unserialize($state);
+        list($hand, $board, $player, $_SESSION['spider_moves'], $_SESSION['last_made_moves']) = unserialize($state);
         if ($type == "play") {
             $hand[$player][$moveFrom]++;
             unset($board[$moveTo]);
         } else if ($type == "move") {
-            echo "<pre>";
-            echo "Move from: ".$moveFrom."<br>";
-            echo "Move to: ".$moveTo."<br>";
             if ($board[$moveFrom][count($board[$moveFrom])-1][1] == "S") {
                 print_r($_SESSION['spider_moves']);
             }
-            echo "</pre>";
         }
 
         $_SESSION['hand'] = $hand;
