@@ -33,7 +33,7 @@ services:
         build: ./app/
         container_name: hive
         ports:
-          - "8000:80"
+          - "8000:8000"
         networks:
           - hive-network
         depends_on:

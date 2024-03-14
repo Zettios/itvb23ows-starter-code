@@ -2,6 +2,7 @@ pipeline {
     agent any
     stages {
 	    stage('Setup') {
+	        agent { docker { image 'php:8.2-apache' } }
 	        steps {
                 script  {
                     def dockerImage = docker.build('itvb23ows-starter-code-app:latest', './app')
@@ -9,7 +10,7 @@ pipeline {
 	        }
         }
         stage('Quick start example test') {
-            agent { docker { image 'php:8.3.3-alpine3.19' } }
+            agent { docker { image 'php:8.2-apache' } }
             steps {
                 sh 'php --version'
             }
@@ -27,6 +28,7 @@ pipeline {
             }
         }
         stage('Execute PHPUnit Tests') {
+            agent { docker { image 'php:8.2-apache' } }
             steps {
                 script {
                     // Run PHPUnit inside the Docker container
