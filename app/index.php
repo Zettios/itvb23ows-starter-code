@@ -62,7 +62,7 @@
         $mustPassTurn = $game_manager->must_player_pass_turn($playPositions, $movePositions);
     }
 
-    $url = "hive-ai";
+    $url = "http://hive-ai:5000";
     $content = json_encode("{
                                 \"move_number\": 1
                                 \"hand\": [

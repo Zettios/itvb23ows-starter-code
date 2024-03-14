@@ -1,10 +1,10 @@
 pipeline {
     agent any
-
     stages {
 	    stage('Setup') {
+	        agent { docker }
             steps {
-                echo 'Setup fase'
+                sh "docker build -t itvb23ows-starter-code-app"
             }
         }
         stage('Quick start example test') {
@@ -14,25 +14,25 @@ pipeline {
             }
         }
         stage('Execute SonarQube scan') {
-            agent {
-                label '!windows'
-            }
+            agent { label '!windows' }
             steps {
                 echo 'Executing SonarQube scan'
                 script {
                     scannerHome = tool 'SonarQube Scanner'
                 }
                 withSonarQubeEnv('SonarQube_Hive') {
-                    sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=sqp_cfa07620b9d512842a7ae416afb2ab4b4cca6e4b"
+                    sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=sqp_0372b2f63613590516a6fd678db64083e4a1f43a"
                 }
             }
         }
         stage('Execute PHPUnit Tests') {
+            agent { docker }
             steps {
+                sh "docker run --rm itvb23ows-starter-code-app"
                 script {
-                    docker.image('itvb23ows-starter-code-app:latest').inside {
+                    docker.image('itvb23ows-starter-code-app').inside {
                         sh 'php --version'
-                        sh 'vendor/bin/phpunit src/.'
+                        sh './vendor/bin/phpunit src/.'
                     }
                 }
             }

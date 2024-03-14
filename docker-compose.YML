@@ -42,9 +42,8 @@ services:
     hive-ai:
       build: ./hive-ai/
       container_name: hive-ai
-      command: flask --app app run --debug
       ports:
-        - '5000:5000'
+        - '7000:7000'
       networks:
         - hive-network
       depends_on:

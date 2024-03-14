@@ -2,12 +2,14 @@ FROM python:3
 
 WORKDIR /app
 
-COPY requirements.txt requirements.txt
+COPY requirements.txt /app
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-EXPOSE 5000
+COPY . /app
 
-COPY . .
+ENV FLASK_RUN_PORT=7000
 
-CMD flask --app app run --debug
+EXPOSE 7000
+
+CMD ["flask", "run"]
