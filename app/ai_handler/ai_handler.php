@@ -1,29 +1,19 @@
 <?php
 
 class ai_handler {
+    private database $database;
+    private hive_util $util;
+
     private static string $AI_API_URL = "http://hive-ai:5000";
     private static array $API_CONTENT_TYPE = array("Content-Type: application/json");
 
-    function request_ai_response(){
-        $testArray = [
-            "move_number" => 8,
-            "hand" => [
-                ["Q" => 0, "B" => 2, "A" => 3, "S" => 3, "G" => 3,],
-                ["Q" => 0, "B" => 2, "A" => 3, "S" => 3, "G" => 3,],
-            ],
-            "board" => [
-                "0,0" => [[0, "Q"]],
-                "0,-1" => [[1, "Q"]],
-                "1,0" => [[0, "B"], [1, "B"]],
-                "0,-2" => [[1, "B"]],
-                "1,-1" => [[0, "A"]],
-                "1,-3" => [[1, "S"], [0, "B"]],
-            ],
-        ];
+    function __construct($database, $util) {
+        $this->database = $database;
+        $this->util = $util;
+    }
 
-        //$content = json_encode(jsonfy_game_state());
-        $content = json_encode($testArray);
-
+    function request_ai_response(): array{
+        $content = $this->jsonfy_game_state();
         $curl = curl_init(ai_handler::$AI_API_URL);
         curl_setopt($curl, CURLOPT_HEADER, false);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
@@ -32,17 +22,73 @@ class ai_handler {
         curl_setopt($curl, CURLOPT_POSTFIELDS, $content);
 
         $json_response = curl_exec($curl);
-        $status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 
         curl_close($curl);
 
-        $response = json_decode($json_response, true);
+        return json_decode($json_response, true);
+    }
+
+    function jsonfy_game_state(): string {
+        $api_okay_board =  $_SESSION['board'];
+        foreach (array_keys($api_okay_board) as $boardKey) {
+            foreach (array_keys($api_okay_board[$boardKey]) as $tileKey) {
+                unset($api_okay_board[$boardKey][$tileKey][2]);
+            }
+        }
+
+        $json_game_state = array(
+            'move_number' => $_SESSION['move_number'],
+            'hand' => $_SESSION['hand'],
+            'board' => $api_okay_board
+        );
+
+        $content = json_encode($json_game_state);
+        return str_replace("\\", '', $content);
+    }
+
+    function process_ai_action($ai_action) {
+        $type_action = $ai_action[0];
+        echo $type_action;
+        switch ($type_action) {
+            case "play":
+                $this->process_ai_play($ai_action[1], $ai_action[2]);
+                $this->echo_ai_play($ai_action);
+                break;
+            case "move":
+                $this->process_ai_move($ai_action[1], $ai_action[2]);
+                $this->echo_ai_move($ai_action);
+                break;
+            case "pass":
+                $this->process_ai_pass();
+                break;
+        }
+    }
+
+    function process_ai_play($piece, $to) {
+        $player = $_SESSION['player'];
+        $_SESSION['move_number']++;
+        $_SESSION['board'][$to] = [[$player, $piece, $this->util->generate_tile_id($player, $piece)]];
+        $_SESSION['hand'][$player][$piece]--;
+        $_SESSION['player'] = 1 - $_SESSION['player'];
+    }
+
+    function process_ai_move($from, $to) {
+        $_SESSION['move_number']++;
+    }
+
+    function process_ai_pass() {
+        $_SESSION['move_number']++;
+    }
+
+    function echo_ai_play($ai_action) {
         echo "<pre>";
-        print_r($response);
+        echo "The AI played ".$ai_action[1]." on position: ".$ai_action[2];
         echo "</pre>";
     }
 
-    function jsonfy_game_state() {
-
+    function echo_ai_move($ai_action) {
+        echo "<pre>";
+        echo "The AI moved ".$ai_action[1]." to position: ".$ai_action[2];
+        echo "</pre>";
     }
 }

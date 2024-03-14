@@ -14,11 +14,13 @@ class game_manager {
             1 => ["Q" => 1, "B" => 2, "S" => 2, "A" => 3, "G" => 3]];
         $_SESSION['player'] = 0; //white
         $_SESSION['last_move'] = 0;
+        $_SESSION['move_number'] = 0;
         $_SESSION['last_made_moves'] = [
             0 => [],
             1 => []
         ];
         $_SESSION['spider_moves'] = [];
+        $_SESSION['ai_game'] = false;
 
         $db_connection->prepare('INSERT INTO games VALUES ()')->execute();
         $_SESSION['game_id'] = $db_connection->insert_id;
@@ -143,7 +145,7 @@ class game_manager {
         } elseif (array_sum($hand) < 9 && $hand['Q'] >= 1 && $piece != "Q") {
             $_SESSION['error'] = 'Must play queen bee';
         } else {
-            $tileId = $this->generate_tile_id($player, $piece);
+            $tileId = $this->util->generate_tile_id($player, $piece);
             $_SESSION['board'][$to] = [[$_SESSION['player'], $piece, $tileId]];
             $_SESSION['hand'][$player][$piece]--;
             $state = $this->get_game_state();
@@ -156,11 +158,8 @@ class game_manager {
                 $piece, $to,
                 $_SESSION['last_move'],
                 $state);
+            $_SESSION['move_number']++;
         }
-    }
-
-    function generate_tile_id($player, $piece): string {
-        return $player.$piece.rand(1000000, 9999999);
     }
 
     function move_insect($db_connection) {
@@ -245,6 +244,8 @@ class game_manager {
                     $_SESSION['last_move'],
                     $game_state);
 
+                $_SESSION['move_number']++;
+
                 if ($tile[1] == "S") {
                     $_SESSION['spider_moves'][] = [$from, $to];
                     if (count($_SESSION['spider_moves'] ) >= 3) {
@@ -252,7 +253,7 @@ class game_manager {
                     }
                 }
 
-                $this->setLastMadeMove($_SESSION['player'], $tile);
+                $this->set_last_made_move($_SESSION['player'], $tile);
 
                 if (empty($_SESSION['spider_moves'])) $_SESSION['player'] = 1 - $_SESSION['player'];
             }
@@ -260,7 +261,7 @@ class game_manager {
         }
     }
 
-    function setLastMadeMove($player, $tile) {
+    function set_last_made_move($player, $tile) {
         $_SESSION['last_made_moves'][$player][] = $tile[2];
         if (count($_SESSION['last_made_moves'][$player]) > 6) {
             array_shift($_SESSION['last_made_moves'][$player]);
@@ -345,6 +346,7 @@ class game_manager {
 
     function pass_turn($db_connection) {
         $this->database->insert_player_pass($db_connection);
+        $_SESSION['move_number']++;
         $_SESSION['last_move'] = $db_connection->insert_id;
         $_SESSION['player'] = 1 - $_SESSION['player'];
     }
@@ -356,6 +358,7 @@ class game_manager {
         $this->set_game_state($result);
 
         $this->database->delete_previous_move($db_connection, $lastMove);
+        $_SESSION['move_number']--;
     }
 
     function get_game_state(): string {

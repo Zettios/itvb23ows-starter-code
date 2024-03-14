@@ -114,4 +114,8 @@ class hive_util {
 
         return min($min1, $min2) <= max($max1, $max2);
     }
+
+    function generate_tile_id($player, $piece): string {
+        return $player.$piece.rand(1000000, 9999999);
+    }
 }
