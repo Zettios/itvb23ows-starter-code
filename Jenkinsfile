@@ -2,7 +2,7 @@ pipeline {
     agent any
     stages {
 	    stage('Setup') {
-	        agent { docker }
+	        agent { docker { image 'php:8.3.3-alpine3.19' } }
             steps {
                 sh "docker build -t itvb23ows-starter-code-app"
             }
@@ -26,7 +26,7 @@ pipeline {
             }
         }
         stage('Execute PHPUnit Tests') {
-            agent { docker }
+            agent { docker { image 'php:8.3.3-alpine3.19' } }
             steps {
                 sh "docker run --rm itvb23ows-starter-code-app"
                 script {
