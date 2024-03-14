@@ -61,6 +61,43 @@
     if (count($board) > 2) {
         $mustPassTurn = $game_manager->must_player_pass_turn($playPositions, $movePositions);
     }
+
+    $url = "hive-ai";
+    $content = json_encode("{
+                                \"move_number\": 1
+                                \"hand\": [
+                                    {\"Q\": 0, \"B\": 2, \"A\": 3, \"S\": 3, \"G\": 3},
+                                    {\"Q\": 1, \"B\": 2, \"A\": 3, \"S\": 3, \"G\": 3},
+                                ],
+                                \"board\": {
+                                    \"0,0\": [[0, \"Q\"]],
+                                }
+                            }");
+
+    $curl = curl_init($url);
+    curl_setopt($curl, CURLOPT_HEADER, false);
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($curl, CURLOPT_HTTPHEADER, array("Content-Type: application/json"));
+    curl_setopt($curl, CURLOPT_POST, true);
+    curl_setopt($curl, CURLOPT_POSTFIELDS, $content);
+
+    $json_response = curl_exec($curl);
+
+    $status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+
+    if ( $status != 201 ) {
+        die("Error: call to URL $url failed with status $status, response $json_response, curl_error " . curl_error($curl) . ", curl_errno " . curl_errno($curl));
+    }
+
+    curl_close($curl);
+
+    $response = json_decode($json_response, true);
+    echo "<pre>";
+    echo ($response);
+    echo "</pre>";
+
+
+
 ?>
 <!DOCTYPE html>
 <html>

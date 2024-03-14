@@ -8,7 +8,8 @@
         "phpunit/phpunit": "^10"
     },
   "require": {
-    "ext-mysqli": "*"
+    "ext-mysqli": "*",
+    "ext-curl": "*"
   }
 }
 
