@@ -2,14 +2,14 @@ pipeline {
     agent any
     stages {
 	    stage('Setup') {
-	        agent { docker { image 'php:8.3.3-alpine3.19' } }
             steps {
-                sh "docker build -t itvb23ows-starter-code-app"
+                def dockerImage = docker.build('itvb23ows-starter-code-app:latest', './app')
             }
         }
         stage('Quick start example test') {
             agent { docker { image 'php:8.3.3-alpine3.19' } }
             steps {
+            docker.build
                 sh 'php --version'
             }
         }
@@ -26,14 +26,10 @@ pipeline {
             }
         }
         stage('Execute PHPUnit Tests') {
-            agent { docker { image 'php:8.3.3-alpine3.19' } }
             steps {
-                sh "docker run --rm itvb23ows-starter-code-app"
                 script {
-                    docker.image('itvb23ows-starter-code-app').inside {
-                        sh 'php --version'
-                        sh './vendor/bin/phpunit src/.'
-                    }
+                    // Run PHPUnit inside the Docker container
+                    sh "docker run --rm ${dockerImage.id} ./vendor/bin/phpunit"
                 }
             }
         }
