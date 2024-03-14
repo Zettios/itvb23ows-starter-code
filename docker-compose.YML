@@ -43,7 +43,7 @@ services:
       build: ./hive-ai/
       container_name: hive-ai
       ports:
-        - '7000:80'
+        - '5000:5000'
       networks:
         - hive-network
       depends_on:

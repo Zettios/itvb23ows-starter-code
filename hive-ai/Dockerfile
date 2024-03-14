@@ -8,8 +8,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /app
 
-ENV FLASK_RUN_PORT=7000
-
-EXPOSE 7000
-
-CMD ["flask", "run"]
+ENTRYPOINT ["flask", "--app", "app", "run", "--debug", "--host=0.0.0.0"]
