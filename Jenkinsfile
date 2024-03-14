@@ -2,7 +2,7 @@ pipeline {
     agent any
     stages {
 	    stage('Setup') {
-	        step {
+	        steps {
                 script  {
                     def dockerImage = docker.build('itvb23ows-starter-code-app:latest', './app')
                 }
