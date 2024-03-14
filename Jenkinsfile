@@ -2,14 +2,15 @@ pipeline {
     agent any
     stages {
 	    stage('Setup') {
-            script  {
-                def dockerImage = docker.build('itvb23ows-starter-code-app:latest', './app')
-            }
+	        step {
+                script  {
+                    def dockerImage = docker.build('itvb23ows-starter-code-app:latest', './app')
+                }
+	        }
         }
         stage('Quick start example test') {
             agent { docker { image 'php:8.3.3-alpine3.19' } }
             steps {
-            docker.build
                 sh 'php --version'
             }
         }
