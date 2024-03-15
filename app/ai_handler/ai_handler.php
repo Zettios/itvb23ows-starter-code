@@ -3,13 +3,15 @@
 class ai_handler {
     private database $database;
     private hive_util $util;
+    private game_manager $game_manager;
 
     private static string $AI_API_URL = "http://hive-ai:5000";
     private static array $API_CONTENT_TYPE = array("Content-Type: application/json");
 
-    function __construct($database, $util) {
+    function __construct($database, $util, $game_manager) {
         $this->database = $database;
         $this->util = $util;
+        $this->game_manager = $game_manager;
     }
 
     function request_ai_response(): array{
@@ -64,30 +66,19 @@ class ai_handler {
     }
 
     function process_ai_play($piece, $to, $db_connection) {
-        $player = $_SESSION['player'];
-        $_SESSION['move_number']++;
-        $_SESSION['board'][$to] = [[$player, $piece, $this->util->generate_tile_id($player, $piece)]];
-        $_SESSION['hand'][$player][$piece]--;
-
-        $state = $this->util->get_game_state();
-
-        $_SESSION['player'] = 1 - $_SESSION['player'];
-
-        $_SESSION['last_move'] = $this->database->insert_player_move(
-            $db_connection,
-            "play",
-            $_SESSION['game_id'],
-            $piece, $to,
-            $_SESSION['last_move'],
-            $state);
+        $_POST['piece'] = $piece;
+        $_POST['to'] = $to;
+        $this->game_manager->play_insect($db_connection);
     }
 
     function process_ai_move($from, $to, $db_connection) {
-        $_SESSION['move_number']++;
+        $_POST['from'] = $from;
+        $_POST['to'] = $to;
+        $this->game_manager->move_insect($db_connection);
     }
 
     function process_ai_pass($db_connection) {
-        $_SESSION['move_number']++;
+        $this->game_manager->pass_turn($db_connection);
     }
 
     function echo_ai_play($ai_action) {

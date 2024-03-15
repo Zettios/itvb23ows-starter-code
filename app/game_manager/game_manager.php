@@ -318,10 +318,11 @@ class game_manager {
     }
 
     function check_for_stalemate(): bool {
-        if (count($_SESSION['last_made_moves'][0]) <= 2 && count($_SESSION['last_made_moves'][1]) <= 2) {
+        if (count($_SESSION['last_made_moves'][0]) <= 2 || count($_SESSION['last_made_moves'][1]) <= 2) {
             return false;
         }
 
+        print_r($_SESSION['last_made_moves']);
         $prevWhiteId = $_SESSION['last_made_moves'][0][0];
         $whiteSameIdCounter = 0;
         $prevBlackId = $_SESSION['last_made_moves'][1][0];

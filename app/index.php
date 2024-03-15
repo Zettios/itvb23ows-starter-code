@@ -51,7 +51,7 @@
     if (!$gameOver) {
         if (isset($_SESSION['ai_game']) && $_SESSION['ai_game'] && $player == 1) {
             include_once 'ai_handler/ai_handler.php';
-            $aiHandler = new ai_handler($database, $util);
+            $aiHandler = new ai_handler($database, $util, $game_manager);
             $aiHandler->process_ai_action($aiHandler->request_ai_response(), $db_connection);
             $board = $_SESSION['board'];
             $hand = $_SESSION['hand'];
@@ -135,7 +135,11 @@
         </div>
 
         <!-------------- VICTORY MESSAGE -------------->
-        <strong><?php if (isset($_SESSION['error'])) echo($_SESSION['error']); unset($_SESSION['error']); ?></strong>
+        <strong><?php
+            if ($gameOver) {
+                echo($victoryMessage);
+            }
+        ?></strong>
 
         <!---------------- PLAY INSECT ---------------->
         <form method="post" action="index.php">
