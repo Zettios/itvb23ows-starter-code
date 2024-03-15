@@ -9,6 +9,7 @@ require_once dirname(__DIR__) . '/../app/database.php';
 
 final class GameManagerTest extends TestCase {
     private game_manager $game_manager;
+    private hive_util $util;
 
     private Stub $database_stub;
     private Stub $mysql_conn_stub;
@@ -17,12 +18,12 @@ final class GameManagerTest extends TestCase {
      * @throws \PHPUnit\Framework\MockObject\Exception
      */
     protected function setUp(): void {
-        $util = new hive_util();
+        $this->util = new hive_util();
 
         $this->database_stub = $this->createStub(database::class);
         $this->mysql_conn_stub = $this->createStub(mysqli::class);
 
-        $this->game_manager = new game_manager($this->database_stub, $util);
+        $this->game_manager = new game_manager($this->database_stub, $this->util);
     }
 
     public function test_show_all_playable_pieces_while_having_played_a_beetle_and_spider() {
@@ -114,7 +115,7 @@ final class GameManagerTest extends TestCase {
         ];
         $result = $this->game_manager->check_for_win($board);
 
-        $this->assertFalse($result[0]);
+        $this->assertEquals("Zwart wint!", $result[0]);
         $this->assertTrue($result[1]);
     }
 
@@ -166,8 +167,8 @@ final class GameManagerTest extends TestCase {
         ];
         $result = $this->game_manager->check_for_win($board);
 
-        $this->assertTrue($result[0]);
-        $this->assertFalse($result[1]);
+        $this->assertEquals("Wit wint!", $result[0]);
+        $this->assertTrue($result[1]);
     }
 
     public function test_player_white_queen_not_fully_surrounded() {
@@ -221,7 +222,7 @@ final class GameManagerTest extends TestCase {
 
         $result = $this->game_manager->check_for_win($board);
 
-        $this->assertFalse($result[0]);
+        $this->assertEquals("", $result[0]);
         $this->assertFalse($result[1]);
     }
 
@@ -318,7 +319,7 @@ final class GameManagerTest extends TestCase {
         ];
         $result = $this->game_manager->check_for_win($board);
 
-        $this->assertTrue($result[0]);
+        $this->assertEquals("Gelijkspel!", $result[0]);
         $this->assertTrue($result[1]);
     }
 
@@ -357,11 +358,18 @@ final class GameManagerTest extends TestCase {
                     1 => "Q",
                     2 => "1s111"
                 ]
+            ],
+            "2,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "B",
+                    2 => "0b111"
+                ]
             ]
         ];
         $result = $this->game_manager->check_for_win($board);
 
-        $this->assertTrue($result[0]);
+        $this->assertEquals("Gelijkspel!", $result[0]);
         $this->assertTrue($result[1]);
     }
 
@@ -431,6 +439,7 @@ final class GameManagerTest extends TestCase {
         $_SESSION['player'] = 0;
         $_SESSION['spider_moves'] = [];
         $_SESSION['last_move'] = -1;
+        $_SESSION['move_number'] = 1;
         $getPreviousMoveReturnResult = [
             0 => "280",
             1 => "73",
@@ -438,7 +447,7 @@ final class GameManagerTest extends TestCase {
             3 => "Q",
             4 => "1,0",
             5 => "279",
-            6 => $this->game_manager->get_game_state(),
+            6 => $this->util->get_game_state(),
         ];
         $this->database_stub ->method('get_previous_move')->willReturn($getPreviousMoveReturnResult);
 
@@ -475,7 +484,7 @@ final class GameManagerTest extends TestCase {
             3 => "0,0",
             4 => "0,1",
             5 => "282",
-            6 => $this->game_manager->get_game_state(),
+            6 => $this->util->get_game_state(),
         ];
 
         $this->database_stub ->method('get_previous_move')->willReturn($getPreviousMoveReturnResult);

@@ -148,7 +148,7 @@ class game_manager {
             $tileId = $this->util->generate_tile_id($player, $piece);
             $_SESSION['board'][$to] = [[$_SESSION['player'], $piece, $tileId]];
             $_SESSION['hand'][$player][$piece]--;
-            $state = $this->get_game_state();
+            $state = $this->util->get_game_state();
             $_SESSION['player'] = 1 - $_SESSION['player'];
 
             $_SESSION['last_move'] = $this->database->insert_player_move(
@@ -234,7 +234,7 @@ class game_manager {
                     unset($board[$from]);
                 }
 
-                $game_state = $this->get_game_state();
+                $game_state = $this->util->get_game_state();
 
                 $_SESSION['last_move'] = $this->database->insert_player_move(
                     $db_connection,
@@ -271,6 +271,11 @@ class game_manager {
     function check_for_win($board): array {
         $whiteWins = false;
         $blackWins = false;
+
+        if (count($board) <= 2) {
+            return ["", false];
+        }
+
         foreach (array_keys($board) as $boardKey) {
             if ($board[$boardKey][0][1] == "Q") {
                 $player = $board[$boardKey][0][0];
@@ -301,7 +306,15 @@ class game_manager {
             }
         }
 
-        return [$whiteWins, $blackWins];
+        if ($whiteWins && $blackWins) {
+            return["Gelijkspel!", true];
+        } else if ($whiteWins) {
+            return["Wit wint!", true];
+        } else if ($blackWins) {
+            return["Zwart wint!", true];
+        } else {
+            return ["", false];
+        }
     }
 
     function check_for_stalemate(): bool {
@@ -355,34 +368,9 @@ class game_manager {
         $result = $this->database->get_previous_move($db_connection, $lastMove);
 
         $_SESSION['last_move'] = $result[5];
-        $this->set_game_state($result);
+        $this->util->set_game_state($result);
 
         $this->database->delete_previous_move($db_connection, $lastMove);
         $_SESSION['move_number']--;
-    }
-
-    function get_game_state(): string {
-        return serialize([$_SESSION['hand'], $_SESSION['board'], $_SESSION['player'],
-                          $_SESSION['spider_moves'], $_SESSION['last_made_moves']]);
-    }
-
-    function set_game_state($result) {
-        $type = $result[2];
-        $moveFrom = $result[3];
-        $moveTo = $result[4];
-        $state = $result[6];
-        list($hand, $board, $player, $_SESSION['spider_moves'], $_SESSION['last_made_moves']) = unserialize($state);
-        if ($type == "play") {
-            $hand[$player][$moveFrom]++;
-            unset($board[$moveTo]);
-        } else if ($type == "move") {
-            if ($board[$moveFrom][count($board[$moveFrom])-1][1] == "S") {
-                print_r($_SESSION['spider_moves']);
-            }
-        }
-
-        $_SESSION['hand'] = $hand;
-        $_SESSION['board'] = $board;
-        $_SESSION['player'] = $player;
     }
 }

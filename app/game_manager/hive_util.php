@@ -63,17 +63,6 @@ class hive_util {
         return true;
     }
 
-    // Bugged
-//    function neighbours_are_same_color($player, $to, $board): bool {
-//        foreach ($board as $boardKey => $boardValue) {
-//            if (!$boardValue) continue;
-//            $playerValue = $boardValue[count($boardValue) - 1][0];
-//
-//            if ($playerValue != $player && $this->is_neighbour($to, $boardKey)) return false;
-//        }
-//        return true;
-//    }
-
     function len($tile): int {
         return $tile ? count($tile) : 0;
     }
@@ -99,13 +88,10 @@ class hive_util {
             }
         }
 
-
-
         if (!($board[$common[0]] ?? false) && !($board[$common[1]] ?? false) &&
             !($board[$from] ?? false) && !($board[$to] ?? false)) {
             return false;
         }
-
 
         $min1 = array_key_exists($common[0], $board) ? $this->len($board[$common[0]]) : 0;
         $min2 = array_key_exists($common[1], $board) ? $this->len($board[$common[1]]) : 0;
@@ -117,5 +103,30 @@ class hive_util {
 
     function generate_tile_id($player, $piece): string {
         return $player.$piece.rand(1000000, 9999999);
+    }
+
+    function get_game_state(): string {
+        return serialize([$_SESSION['hand'], $_SESSION['board'], $_SESSION['player'],
+            $_SESSION['spider_moves'], $_SESSION['last_made_moves']]);
+    }
+
+    function set_game_state($result) {
+        $type = $result[2];
+        $moveFrom = $result[3];
+        $moveTo = $result[4];
+        $state = $result[6];
+        list($hand, $board, $player, $_SESSION['spider_moves'], $_SESSION['last_made_moves']) = unserialize($state);
+        if ($type == "play") {
+            $hand[$player][$moveFrom]++;
+            unset($board[$moveTo]);
+        } else if ($type == "move") {
+            if ($board[$moveFrom][count($board[$moveFrom])-1][1] == "S") {
+                print_r($_SESSION['spider_moves']);
+            }
+        }
+
+        $_SESSION['hand'] = $hand;
+        $_SESSION['board'] = $board;
+        $_SESSION['player'] = $player;
     }
 }

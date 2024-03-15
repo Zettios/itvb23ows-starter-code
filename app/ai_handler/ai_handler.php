@@ -46,37 +46,47 @@ class ai_handler {
         return str_replace("\\", '', $content);
     }
 
-    function process_ai_action($ai_action) {
+    function process_ai_action($ai_action, $db_connection) {
         $type_action = $ai_action[0];
-        echo $type_action;
         switch ($type_action) {
             case "play":
-                $this->process_ai_play($ai_action[1], $ai_action[2]);
+                $this->process_ai_play($ai_action[1], $ai_action[2], $db_connection);
                 $this->echo_ai_play($ai_action);
                 break;
             case "move":
-                $this->process_ai_move($ai_action[1], $ai_action[2]);
+                $this->process_ai_move($ai_action[1], $ai_action[2], $db_connection);
                 $this->echo_ai_move($ai_action);
                 break;
             case "pass":
-                $this->process_ai_pass();
+                $this->process_ai_pass($db_connection);
                 break;
         }
     }
 
-    function process_ai_play($piece, $to) {
+    function process_ai_play($piece, $to, $db_connection) {
         $player = $_SESSION['player'];
         $_SESSION['move_number']++;
         $_SESSION['board'][$to] = [[$player, $piece, $this->util->generate_tile_id($player, $piece)]];
         $_SESSION['hand'][$player][$piece]--;
+
+        $state = $this->util->get_game_state();
+
         $_SESSION['player'] = 1 - $_SESSION['player'];
+
+        $_SESSION['last_move'] = $this->database->insert_player_move(
+            $db_connection,
+            "play",
+            $_SESSION['game_id'],
+            $piece, $to,
+            $_SESSION['last_move'],
+            $state);
     }
 
-    function process_ai_move($from, $to) {
+    function process_ai_move($from, $to, $db_connection) {
         $_SESSION['move_number']++;
     }
 
-    function process_ai_pass() {
+    function process_ai_pass($db_connection) {
         $_SESSION['move_number']++;
     }
 

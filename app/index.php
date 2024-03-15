@@ -41,39 +41,37 @@
     $movePositions = [];
     $playPositions = [];
     $gameOver = false;
+    $victoryMessage = "";
     $mustPassTurn = false;
 
+    $winnerValues = $game_manager->check_for_win($board);
+    $victoryMessage = $winnerValues[0];
+    $gameOver = $winnerValues[1];
 
-    if (count($board) > 2) {
-        $winnerValues = $game_manager->check_for_win($board);
-        if ($winnerValues[0] && $winnerValues[1]) {
-            echo "Gelijkspel!";
-            $gameOver = true;
-        } else if ($winnerValues[0]) {
-            echo "Wit wint!";
-            $gameOver = true;
-        } else if ($winnerValues[1]) {
-            echo "Zwart wint!";
-            $gameOver = true;
+    if (!$gameOver) {
+        if (isset($_SESSION['ai_game']) && $_SESSION['ai_game'] && $player == 1) {
+            include_once 'ai_handler/ai_handler.php';
+            $aiHandler = new ai_handler($database, $util);
+            $aiHandler->process_ai_action($aiHandler->request_ai_response(), $db_connection);
+            $board = $_SESSION['board'];
+            $hand = $_SESSION['hand'];
+            $player = $_SESSION['player'];
+
+            $winnerValues = $game_manager->check_for_win($board);
+            $victoryMessage = $winnerValues[0];
+            $gameOver = $winnerValues[1];
         }
-    }
 
-    if (isset($_SESSION['ai_game']) && $_SESSION['ai_game'] && $player == 1) {
-        include_once 'ai_handler/ai_handler.php';
-        $aiHandler = new ai_handler($database, $util);
-        $aiHandler->process_ai_action($aiHandler->request_ai_response());
-        echo "<pre>";
-        print_r($board);
-        echo "</pre>";
-    }
+        if (!$gameOver) {
+            $playableTiles = $game_manager->get_playable_tiles($hand, $player);
 
-    $playableTiles = $game_manager->get_playable_tiles($hand, $player);
-
-    $playAndMovePositions = $game_manager->get_play_and_move_positions($board, $player);
-    $playPositions = $playAndMovePositions[0];
-    $movePositions = $playAndMovePositions[1];
-    if (count($board) > 2) {
-        $mustPassTurn = $game_manager->must_player_pass_turn($playPositions, $movePositions);
+            $playAndMovePositions = $game_manager->get_play_and_move_positions($board, $player);
+            $playPositions = $playAndMovePositions[0];
+            $movePositions = $playAndMovePositions[1];
+            if (count($board) > 2) {
+                $mustPassTurn = $game_manager->must_player_pass_turn($playPositions, $movePositions);
+            }
+        }
     }
 ?>
 <!DOCTYPE html>
@@ -130,9 +128,14 @@
             }
             ?>
         </div>
+
+        <!---------------- PLAYER TURN ---------------->
         <div class="turn">
             Turn: <?php if ($player == 0) echo "White (0)"; else echo "Black (1)"; ?>
         </div>
+
+        <!-------------- VICTORY MESSAGE -------------->
+        <strong><?php if (isset($_SESSION['error'])) echo($_SESSION['error']); unset($_SESSION['error']); ?></strong>
 
         <!---------------- PLAY INSECT ---------------->
         <form method="post" action="index.php">
