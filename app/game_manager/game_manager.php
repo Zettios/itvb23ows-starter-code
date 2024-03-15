@@ -126,7 +126,8 @@ class game_manager {
         return [array_unique($playPositions), array_unique($movePositions)];
     }
 
-    function play_insect($db_connection) {
+    function play_insect($db_connection)
+    {
         $piece = $_POST['piece'];
         $to = $_POST['to'];
 
@@ -134,32 +135,40 @@ class game_manager {
         $board = $_SESSION['board'];
         $hand = $_SESSION['hand'][$player];
 
-        if (!$hand[$piece]) {
-            $_SESSION['error'] = "Player does not have tile";
-        } elseif (isset($board[$to])) {
-            $_SESSION['error'] = 'Board position is not empty';
-        } elseif (count($board) && !$this->util->has_play_neighbour($to, $board)) {
-            $_SESSION['error'] = "board position has no neighbour";
-        } elseif (array_sum($hand) < 11 && !$this->util->neighbours_are_same_color_new($player, $to, $board)) {
-            $_SESSION['error'] = "Board position has opposing neighbour";
-        } elseif (array_sum($hand) < 9 && $hand['Q'] >= 1 && $piece != "Q") {
-            $_SESSION['error'] = 'Must play queen bee';
+        if ($_SESSION['ai_game'] && $player == 1) {
+            $this->perform_play($player, $piece, $to, $db_connection);
         } else {
-            $tileId = $this->util->generate_tile_id($player, $piece);
-            $_SESSION['board'][$to] = [[$_SESSION['player'], $piece, $tileId]];
-            $_SESSION['hand'][$player][$piece]--;
-            $state = $this->util->get_game_state();
-            $_SESSION['player'] = 1 - $_SESSION['player'];
-
-            $_SESSION['last_move'] = $this->database->insert_player_move(
-                $db_connection,
-                "play",
-                $_SESSION['game_id'],
-                $piece, $to,
-                $_SESSION['last_move'],
-                $state);
-            $_SESSION['move_number']++;
+            if (!$hand[$piece]) {
+                $_SESSION['error'] = "Player does not have tile";
+            } elseif (isset($board[$to])) {
+                $_SESSION['error'] = 'Board position is not empty';
+            } elseif (count($board) && !$this->util->has_play_neighbour($to, $board)) {
+                $_SESSION['error'] = "board position has no neighbour";
+            } elseif (array_sum($hand) < 11 && !$this->util->neighbours_are_same_color_new($player, $to, $board)) {
+                $_SESSION['error'] = "Board position has opposing neighbour";
+            } elseif (array_sum($hand) < 9 && $hand['Q'] >= 1 && $piece != "Q") {
+                $_SESSION['error'] = 'Must play queen bee';
+            } else {
+                $this->perform_play($player, $piece, $to, $db_connection);
+            }
         }
+    }
+
+    function perform_play($player, $piece, $to, $db_connection) {
+        $tileId = $this->util->generate_tile_id($player, $piece);
+        $_SESSION['board'][$to] = [[$_SESSION['player'], $piece, $tileId]];
+        $_SESSION['hand'][$player][$piece]--;
+        $state = $this->util->get_game_state();
+        $_SESSION['player'] = 1 - $_SESSION['player'];
+
+        $_SESSION['last_move'] = $this->database->insert_player_move(
+            $db_connection,
+            "play",
+            $_SESSION['game_id'],
+            $piece, $to,
+            $_SESSION['last_move'],
+            $state);
+        $_SESSION['move_number']++;
     }
 
     function move_insect($db_connection) {
@@ -171,94 +180,104 @@ class game_manager {
         $hand = $_SESSION['hand'][$player];
         unset($_SESSION['error']);
 
-        if (!isset($board[$from])) {
-            $_SESSION['error'] = 'Board position is empty';
-        } else if ($board[$from][count($board[$from])-1][0] != $player) {
-            $_SESSION['error'] = "Tile is not owned by player";
-        } else if ($hand['Q']) {
-            $_SESSION['error'] = "Queen bee is not played";
-        } else {
+        if ($_SESSION['ai_game'] && $player == 1) {
             $tile = array_pop($board[$from]);
-
-            //Checks for a hive split
-            if (!$this->util->has_move_neighbour($from, $to, $board)) {
-                $_SESSION['error'] = "Move would split hive";
+            $_SESSION['board'] = $this->perform_move($board, $tile, $from, $to, $db_connection);
+        } else {
+            if (!isset($board[$from])) {
+                $_SESSION['error'] = 'Board position is empty';
+            } else if ($board[$from][count($board[$from])-1][0] != $player) {
+                $_SESSION['error'] = "Tile is not owned by player";
+            } else if ($hand['Q']) {
+                $_SESSION['error'] = "Queen bee is not played";
             } else {
-                $all = array_keys($board);
-                $queue = [array_shift($all)];
+                $tile = array_pop($board[$from]);
 
-                while ($queue) {
-                    $next = explode(',', array_shift($queue));
-                    foreach ($GLOBALS['OFFSETS'] as $pq) {
-                        list($p, $q) = $pq;
-
-                        $p += $next[0];
-                        $q += $next[1];
-
-                        if (in_array("$p,$q", $all)) {
-                            $queue[] = "$p,$q";
-                            $all = array_diff($all, ["$p,$q"]);
-                        }
-                    }
-                }
-
-                if (!empty($all)) {
+                //Checks for a hive split
+                if (!$this->util->has_move_neighbour($from, $to, $board)) {
                     $_SESSION['error'] = "Move would split hive";
                 } else {
-                    if ($from == $to) {
-                        $_SESSION['error'] = 'Tile must move';
-                    } elseif (isset($board[$to]) && $tile[1] != "B") {
-                        $_SESSION['error'] = 'Tile not empty';
-                    } elseif ($tile[1] != "G") {
-                        if (!$this->util->can_tile_slide($board, $from, $to)) {
-                            $_SESSION['error'] = 'Tile must slide';
+                    $all = array_keys($board);
+                    $queue = [array_shift($all)];
+
+                    while ($queue) {
+                        $next = explode(',', array_shift($queue));
+                        foreach ($GLOBALS['OFFSETS'] as $pq) {
+                            list($p, $q) = $pq;
+
+                            $p += $next[0];
+                            $q += $next[1];
+
+                            if (in_array("$p,$q", $all)) {
+                                $queue[] = "$p,$q";
+                                $all = array_diff($all, ["$p,$q"]);
+                            }
+                        }
+                    }
+
+                    if (!empty($all)) {
+                        $_SESSION['error'] = "Move would split hive";
+                    } else {
+                        if ($from == $to) {
+                            $_SESSION['error'] = 'Tile must move';
+                        } elseif (isset($board[$to]) && $tile[1] != "B") {
+                            $_SESSION['error'] = 'Tile not empty';
+                        } elseif ($tile[1] != "G") {
+                            if (!$this->util->can_tile_slide($board, $from, $to)) {
+                                $_SESSION['error'] = 'Tile must slide';
+                            }
                         }
                     }
                 }
-            }
 
-            if (isset($_SESSION['error'])) {
-                if (isset($board[$from])) {
-                    array_push($board[$from], $tile);
-                } else {
-                    $board[$from] = [$tile];
-                }
-            } else {
-                if (isset($board[$to])) {
-                    array_push($board[$to], $tile);
-                } else {
-                    $board[$to] = [$tile];
-                }
-
-                if (empty($board[$from])) {
-                    unset($board[$from]);
-                }
-
-                $game_state = $this->util->get_game_state();
-
-                $_SESSION['last_move'] = $this->database->insert_player_move(
-                    $db_connection,
-                    "move",
-                    $_SESSION['game_id'],
-                    $from, $to,
-                    $_SESSION['last_move'],
-                    $game_state);
-
-                $_SESSION['move_number']++;
-
-                if ($tile[1] == "S") {
-                    $_SESSION['spider_moves'][] = [$from, $to];
-                    if (count($_SESSION['spider_moves'] ) >= 3) {
-                        $_SESSION['spider_moves'] = [];
+                if (isset($_SESSION['error'])) {
+                    if (isset($board[$from])) {
+                        array_push($board[$from], $tile);
+                    } else {
+                        $board[$from] = [$tile];
                     }
+                } else {
+                    $board = $this->perform_move($board, $tile, $from, $to, $db_connection);
                 }
-
-                $this->set_last_made_move($_SESSION['player'], $tile);
-
-                if (empty($_SESSION['spider_moves'])) $_SESSION['player'] = 1 - $_SESSION['player'];
+                $_SESSION['board'] = $board;
             }
-            $_SESSION['board'] = $board;
         }
+    }
+
+    function perform_move($board, $tile, $from, $to, $db_connection): array {
+        if (isset($board[$to])) {
+            array_push($board[$to], $tile);
+        } else {
+            $board[$to] = [$tile];
+        }
+
+        if (empty($board[$from])) {
+            unset($board[$from]);
+        }
+
+        $game_state = $this->util->get_game_state();
+
+        $_SESSION['last_move'] = $this->database->insert_player_move(
+            $db_connection,
+            "move",
+            $_SESSION['game_id'],
+            $from, $to,
+            $_SESSION['last_move'],
+            $game_state);
+
+        $_SESSION['move_number']++;
+
+        if ($tile[1] == "S") {
+            $_SESSION['spider_moves'][] = [$from, $to];
+            if (count($_SESSION['spider_moves'] ) >= 3) {
+                $_SESSION['spider_moves'] = [];
+            }
+        }
+
+        $this->set_last_made_move($_SESSION['player'], $tile);
+
+        if (empty($_SESSION['spider_moves'])) $_SESSION['player'] = 1 - $_SESSION['player'];
+        return $board;
     }
 
     function set_last_made_move($player, $tile) {
