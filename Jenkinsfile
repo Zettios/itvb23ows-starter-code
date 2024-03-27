@@ -9,6 +9,7 @@ pipeline {
 	    stage('Setup') {
 	        steps {
                 sh 'composer install'
+                sh 'composer require --dev phpunit/phpunit'
             }
         }
         stage('Execute SonarQube scan') {
@@ -24,11 +25,10 @@ pipeline {
             }
         }
         stage('Execute PHPUnit Tests') {
-            agent { docker { image 'php:8.2-apache' } }
             steps {
                 script {
                     // Run PHPUnit tests
-                    sh "./vendor/bin/phpunit"
+                    sh 'vendor/bin/phpunit /var/www/html/tests'
                 }
             }
         }
@@ -36,6 +36,7 @@ pipeline {
     post {
         always {
             echo 'Done'
+            phpunit '--log-junit report.xml'
         }
         success {
             echo "Build successful"
