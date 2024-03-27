@@ -5,7 +5,7 @@ pipeline {
 	        agent { docker { image 'php:8.2-apache' } }
 	        steps {
                 script  {
-                    def dockerImage = docker.build('itvb23ows-starter-code-app:latest', './app')
+                    echo 'Setup'
                 }
 	        }
         }
