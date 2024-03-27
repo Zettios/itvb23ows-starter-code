@@ -28,6 +28,7 @@ pipeline {
             }
         }
         stage('Execute PHPUnit Tests') {
+            agent { docker { image 'php:8.2-apache' } }
             steps {
                 script {
                     // Run PHPUnit tests
