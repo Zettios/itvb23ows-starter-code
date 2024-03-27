@@ -17,16 +17,20 @@
     $db_connection = $database->connect_to_database();
     $game_manager = new game_manager($database, $util);
 
-    if (!isset($_SESSION['board']) || isset($_POST['restart'])) {
-        $game_manager->init_game($db_connection);
-    } else if (isset($_POST['play'])) {
-        $game_manager->play_insect($db_connection);
-    } else if (isset($_POST['move'])) {
-        $game_manager->move_insect($db_connection);
-    } else if (isset($_POST['pass'])) {
-        $game_manager->pass_turn($db_connection);
-    } else if (isset($_POST['undo'])) {
-        $game_manager->undo_move($_SESSION['last_move'], $db_connection);
+    if (isset($_POST['ai_game'])) {
+        $_SESSION['ai_game'] = !$_SESSION['ai_game'];
+    } else {
+        if (!isset($_SESSION['board']) || isset($_POST['restart'])) {
+            $game_manager->init_game($db_connection);
+        } else if (isset($_POST['play'])) {
+            $game_manager->play_insect($db_connection);
+        } else if (isset($_POST['move'])) {
+            $game_manager->move_insect($db_connection);
+        } else if (isset($_POST['pass'])) {
+            $game_manager->pass_turn($db_connection);
+        } else if (isset($_POST['undo'])) {
+            $game_manager->undo_move($_SESSION['last_move'], $db_connection);
+        }
     }
 
     $lastMoveId = $_SESSION['last_move'];
@@ -36,24 +40,39 @@
     $hand = $_SESSION['hand'];
     $movePositions = [];
     $playPositions = [];
+    $gameOver = false;
+    $victoryMessage = "";
+    $mustPassTurn = false;
 
-    if (count($board) > 2) {
-        $surroundedValues = $game_manager->check_for_win($board);
-        if ($surroundedValues[0] && $surroundedValues[1]) {
-            echo "Gelijkspel!";
-        } else if ($surroundedValues[0]) {
-            echo "Zwart wint!";
-        } else if ($surroundedValues[1]) {
-            echo "Wit wint!";
+    $winnerValues = $game_manager->check_for_win($board);
+    $victoryMessage = $winnerValues[0];
+    $gameOver = $winnerValues[1];
+
+    if (!$gameOver) {
+        if (isset($_SESSION['ai_game']) && $_SESSION['ai_game'] && $player == 1) {
+            include_once 'ai_handler/ai_handler.php';
+            $aiHandler = new ai_handler($database, $util, $game_manager);
+            $aiHandler->process_ai_action($aiHandler->request_ai_response(), $db_connection);
+            $board = $_SESSION['board'];
+            $hand = $_SESSION['hand'];
+            $player = $_SESSION['player'];
+
+            $winnerValues = $game_manager->check_for_win($board);
+            $victoryMessage = $winnerValues[0];
+            $gameOver = $winnerValues[1];
+        }
+
+        if (!$gameOver) {
+            $playableTiles = $game_manager->get_playable_tiles($hand, $player);
+
+            $playAndMovePositions = $game_manager->get_play_and_move_positions($board, $player);
+            $playPositions = $playAndMovePositions[0];
+            $movePositions = $playAndMovePositions[1];
+            if (count($board) > 2) {
+                $mustPassTurn = $game_manager->must_player_pass_turn($playPositions, $movePositions);
+            }
         }
     }
-
-    $playableTiles = $game_manager->get_playable_tiles($hand, $player);
-
-    $playAndMovePositions = $game_manager->get_play_and_move_positions($board, $player);
-    $playPositions = $playAndMovePositions[0];
-    $movePositions = $playAndMovePositions[1];
-    $mustPassTurn = $game_manager->must_player_pass_turn($playPositions, $movePositions);
 ?>
 <!DOCTYPE html>
 <html>
@@ -109,14 +128,23 @@
             }
             ?>
         </div>
+
+        <!---------------- PLAYER TURN ---------------->
         <div class="turn">
             Turn: <?php if ($player == 0) echo "White (0)"; else echo "Black (1)"; ?>
         </div>
 
+        <!-------------- VICTORY MESSAGE -------------->
+        <strong><?php
+            if ($gameOver) {
+                echo($victoryMessage);
+            }
+        ?></strong>
+
         <!---------------- PLAY INSECT ---------------->
         <form method="post" action="index.php">
             <select name="piece" <?php
-            if (array_sum($hand[$player]) <= '0' || count($_SESSION['spider_moves']) >= 1){ echo "disabled"; } ?>>
+            if (array_sum($hand[$player]) <= '0' || count($_SESSION['spider_moves']) >= 1 || $gameOver || $mustPassTurn){ echo "disabled"; } ?>>
                 <?php
                     foreach ($playableTiles as $key => $tile) {
                         echo "<option value=\"$tile\">$tile</option>";
@@ -124,7 +152,7 @@
                 ?>
             </select>
             <select name="to" <?php
-            if (array_sum($hand[$player]) <= '0' || count($_SESSION['spider_moves']) >= 1){ echo "disabled"; } ?>>
+            if (array_sum($hand[$player]) <= '0' || count($_SESSION['spider_moves']) >= 1 || $gameOver || $mustPassTurn){ echo "disabled"; } ?>>
                 <?php
                     foreach ($playPositions as $boardPosition) {
                         echo "<option value=\"$boardPosition\">$boardPosition</option>";
@@ -132,12 +160,12 @@
                 ?>
             </select>
             <input type="submit" name="play" value="Play" <?php
-            if (array_sum($hand[$player]) <= '0'  || count($_SESSION['spider_moves']) >= 1){ echo "disabled"; } ?>>
+            if (array_sum($hand[$player]) <= '0'  || count($_SESSION['spider_moves']) >= 1 || $gameOver || $mustPassTurn){ echo "disabled"; } ?>>
         </form>
 
         <!---------------- MOVE INSECT ---------------->
         <form method="post" action="index.php">
-            <select name="from" <?php if ($hand[$player]["Q"] >= 1) { echo "disabled"; } ?>>
+            <select name="from" <?php if ($hand[$player]["Q"] >= 1 || $gameOver || $mustPassTurn) { echo "disabled"; } ?>>
                 <?php
                     if (count($_SESSION['spider_moves']) >= 1) {
                         $val = $_SESSION['spider_moves'][array_key_last($_SESSION['spider_moves'])][1];
@@ -151,25 +179,39 @@
                     }
                 ?>
             </select>
-            <select name="to" <?php if ($hand[$player]["Q"] >= 1) { echo "disabled"; } ?>>
+            <select name="to" <?php if ($hand[$player]["Q"] >= 1 || $gameOver || $mustPassTurn) { echo "disabled"; } ?>>
                 <?php
                     foreach ($movePositions as $boardPosition) {
                         echo "<option value=\"$boardPosition\">$boardPosition</option>";
                     }
                 ?>
             </select>
-            <input type="submit" name="move" value="Move" <?php if ($hand[$player]["Q"] >= 1) { echo "disabled"; } ?>>
+            <input type="submit" name="move" value="Move" <?php if ($hand[$player]["Q"] >= 1 || $gameOver || $mustPassTurn) { echo "disabled"; } ?>>
         </form>
 
         <!---------------- PASS ---------------->
         <form method="post" action="index.php">
-            <input type="submit" name="pass" value="Pass" <?php if ($mustPassTurn){ echo "disabled"; } ?>>
+            <input type="submit" name="pass" value="Pass" <?php if ($gameOver || !$mustPassTurn){ echo "disabled"; } ?>>
         </form>
 
         <!---------------- RESTART ---------------->
         <form method="post" action="index.php">
             <input type="submit" name="restart" value="Restart">
         </form>
+
+        <!------------ PLAY AGAINST AI ------------>
+        <?php
+            if ($_SESSION['move_number'] == 0) {
+                echo '<form method="post" action="index.php">';
+                if ($_SESSION['ai_game']) {
+                    echo '<input type="submit" name="ai_game" value="Play against a friend?">';
+                } else {
+                    echo '<input type="submit" name="ai_game" value="Play AI game?">';
+                }
+                echo '</form>';
+            }
+        ?>
+
 
         <!---------------- ERROR MESSAGE ---------------->
         <strong><?php if (isset($_SESSION['error'])) echo($_SESSION['error']); unset($_SESSION['error']); ?></strong>

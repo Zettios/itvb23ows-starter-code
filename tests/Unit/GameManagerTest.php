@@ -9,6 +9,7 @@ require_once dirname(__DIR__) . '/../app/database.php';
 
 final class GameManagerTest extends TestCase {
     private game_manager $game_manager;
+    private hive_util $util;
 
     private Stub $database_stub;
     private Stub $mysql_conn_stub;
@@ -17,12 +18,12 @@ final class GameManagerTest extends TestCase {
      * @throws \PHPUnit\Framework\MockObject\Exception
      */
     protected function setUp(): void {
-        $util = new hive_util();
+        $this->util = new hive_util();
 
         $this->database_stub = $this->createStub(database::class);
         $this->mysql_conn_stub = $this->createStub(mysqli::class);
 
-        $this->game_manager = new game_manager($this->database_stub, $util);
+        $this->game_manager = new game_manager($this->database_stub, $this->util);
     }
 
     public function test_show_all_playable_pieces_while_having_played_a_beetle_and_spider() {
@@ -66,8 +67,9 @@ final class GameManagerTest extends TestCase {
         $this->assertSame($expected, $result);
     }
 
-    public function test_player_wins() {
+    public function test_player_black_wins() {
         $board = [
+            // Queen to surround
             "0,0" => [
                 0 => [
                     0 => 0,
@@ -86,6 +88,18 @@ final class GameManagerTest extends TestCase {
                     1 => "B"
                 ]
             ],
+            "-1,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "B"
+                ]
+            ],
+            "1,0" => [
+                0 => [
+                    0 => 1,
+                    1 => "B"
+                ]
+            ],
             "-1,1" => [
                 0 => [
                     0 => 1,
@@ -96,6 +110,34 @@ final class GameManagerTest extends TestCase {
                 0 => [
                     0 => 0,
                     1 => "S"
+                ]
+            ]
+        ];
+        $result = $this->game_manager->check_for_win($board);
+
+        $this->assertEquals("Zwart wint!", $result[0]);
+        $this->assertTrue($result[1]);
+    }
+
+    public function test_player_white_wins() {
+        $board = [
+            // Queen to surround
+            "0,0" => [
+                0 => [
+                    0 => 1,
+                    1 => "Q"
+                ]
+            ],
+            "0,1" => [
+                0 => [
+                    0 => 1,
+                    1 => "B"
+                ]
+            ],
+            "0,-1" => [
+                0 => [
+                    0 => 0,
+                    1 => "B"
                 ]
             ],
             "-1,0" => [
@@ -109,11 +151,249 @@ final class GameManagerTest extends TestCase {
                     0 => 1,
                     1 => "B"
                 ]
+            ],
+            "-1,1" => [
+                0 => [
+                    0 => 1,
+                    1 => "Q"
+                ]
+            ],
+            "1,-1" => [
+                0 => [
+                    0 => 0,
+                    1 => "S"
+                ]
             ]
         ];
         $result = $this->game_manager->check_for_win($board);
 
-        $this->assertTrue($result[0]);
+        $this->assertEquals("Wit wint!", $result[0]);
+        $this->assertTrue($result[1]);
+    }
+
+    public function test_player_white_queen_not_fully_surrounded() {
+        $board = [
+            // Queen to surround
+            "0,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "Q"
+                ]
+            ],
+            "0,1" => [
+                0 => [
+                    0 => 1,
+                    1 => "B"
+                ]
+            ],
+            "0,-1" => [
+                0 => [
+                    0 => 0,
+                    1 => "B"
+                ]
+            ],
+            "1,0" => [
+                0 => [
+                    0 => 1,
+                    1 => "B"
+                ]
+            ],
+            "-1,1" => [
+                0 => [
+                    0 => 1,
+                    1 => "Q"
+                ]
+            ],
+            "1,-1" => [
+                0 => [
+                    0 => 0,
+                    1 => "S"
+                ]
+            ]
+        ];
+        $_SESSION['last_made_moves'] = [
+            0 => [
+                0 => "0s000",
+            ],
+            1 => [
+                0 => "1s111",
+            ]
+        ];
+
+        $result = $this->game_manager->check_for_win($board);
+
+        $this->assertEquals("", $result[0]);
+        $this->assertFalse($result[1]);
+    }
+
+    public function test_draw() {
+        // b w b w
+        //b q b q w
+        // w w b w
+        $board = [
+            // White queen to surround
+            "0,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "Q"
+                ]
+            ],
+            // Black queen to surround
+            "2,0" => [
+                0 => [
+                    0 => 1,
+                    1 => "Q"
+                ]
+            ],
+            // Top row
+            "0,-1" => [
+                0 => [
+                    0 => 1,
+                    1 => "B"
+                ]
+            ],
+            "1,-1" => [
+                0 => [
+                    0 => 0,
+                    1 => "B"
+                ]
+            ],
+            "2,-1" => [
+                0 => [
+                    0 => 1,
+                    1 => "B"
+                ]
+            ],
+            "3,-1" => [
+                0 => [
+                    0 => 0,
+                    1 => "B"
+                ]
+            ],
+            // Middle row
+            "-1,0" => [
+                0 => [
+                    0 => 1,
+                    1 => "B"
+                ]
+            ],
+            "1,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "B"
+                ]
+            ],
+            "3,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "B"
+                ]
+            ],
+
+            // Bottom row
+            "-1,1" => [
+                0 => [
+                    0 => 0,
+                    1 => "B"
+                ]
+            ],
+            "0,1" => [
+                0 => [
+                    0 => 0,
+                    1 => "B"
+                ]
+            ],
+            "1,1" => [
+                0 => [
+                    0 => 1,
+                    1 => "B"
+                ]
+            ],
+            "2,1" => [
+                0 => [
+                    0 => 0,
+                    1 => "B"
+                ]
+            ],
+
+        ];
+        $result = $this->game_manager->check_for_win($board);
+
+        $this->assertEquals("Gelijkspel!", $result[0]);
+        $this->assertTrue($result[1]);
+    }
+
+    public function test_draw_by_stalemate() {
+        $_SESSION['last_made_moves'] = [
+            0 => [
+                0 => "0s000",
+                1 => "0s000",
+                2 => "0s000",
+                3 => "0s000",
+                4 => "0s000",
+                5 => "0s000",
+            ],
+            1 => [
+                0 => "1s111",
+                1 => "1s111",
+                2 => "1s111",
+                3 => "1s111",
+                4 => "1s111",
+                5 => "1s111",
+            ]
+        ];
+        $board = [
+            // White queen to surround
+            "0,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "Q",
+                    2 => "0s000"
+                ]
+            ],
+            // Black queen to surround
+            "1,0" => [
+                0 => [
+                    0 => 1,
+                    1 => "Q",
+                    2 => "1s111"
+                ]
+            ],
+            "2,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "B",
+                    2 => "0b111"
+                ]
+            ]
+        ];
+        $result = $this->game_manager->check_for_win($board);
+
+        $this->assertEquals("Gelijkspel!", $result[0]);
+        $this->assertTrue($result[1]);
+    }
+
+    public function test_stalemate_check_where_player_still_uses_another_tile() {
+        $_SESSION['last_made_moves'] = [
+            0 => [
+                0 => "0s000",
+                1 => "0s000",
+                2 => "0s001",
+                3 => "0s000",
+                4 => "0s000",
+                5 => "0s000",
+            ],
+            1 => [
+                0 => "1s111",
+                1 => "1s111",
+                2 => "1s111",
+                3 => "1s111",
+                4 => "1s111",
+                5 => "1s111",
+            ]
+        ];
+
+        $this->assertFalse($this->game_manager->check_for_stalemate());
     }
 
     public function test_player_must_pass_turn() {
@@ -159,6 +439,7 @@ final class GameManagerTest extends TestCase {
         $_SESSION['player'] = 0;
         $_SESSION['spider_moves'] = [];
         $_SESSION['last_move'] = -1;
+        $_SESSION['move_number'] = 1;
         $getPreviousMoveReturnResult = [
             0 => "280",
             1 => "73",
@@ -166,7 +447,7 @@ final class GameManagerTest extends TestCase {
             3 => "Q",
             4 => "1,0",
             5 => "279",
-            6 => $this->game_manager->get_game_state(),
+            6 => $this->util->get_game_state(),
         ];
         $this->database_stub ->method('get_previous_move')->willReturn($getPreviousMoveReturnResult);
 
@@ -203,7 +484,7 @@ final class GameManagerTest extends TestCase {
             3 => "0,0",
             4 => "0,1",
             5 => "282",
-            6 => $this->game_manager->get_game_state(),
+            6 => $this->util->get_game_state(),
         ];
 
         $this->database_stub ->method('get_previous_move')->willReturn($getPreviousMoveReturnResult);
@@ -215,7 +496,7 @@ final class GameManagerTest extends TestCase {
 
     public function test_calculate_correct_play_and_move_values() {
         $expectedPlayPositions = ["0,-1", "-1,0", "-1,1"];
-        $expectedMovePositions = ["0,1", "0,-1", "-1,0", "-1,1", "1,-1"];
+        $expectedMovePositions = ["0,1", "1,-1"];
         $_SESSION['spider_moves'] = [];
         $player = 0;
         $board = [
@@ -244,13 +525,15 @@ final class GameManagerTest extends TestCase {
                 "1,0" => [
                     0 => [
                         0 => 1,
-                        1 => "Q"
+                        1 => "Q",
+                        2 => "0"
                     ]
                 ],
                 "0,1" => [
                     0 => [
                         0 => 0,
-                        1 => "Q"
+                        1 => "Q",
+                        2 => "0"
                     ]
                  ]
             ];
@@ -266,13 +549,15 @@ final class GameManagerTest extends TestCase {
             "0,0" => [
                 0 => [
                     0 => 0,
-                    1 => "Q"
+                    1 => "Q",
+                    2 => "0"
                 ]
             ],
             "1,0" => [
                 0 => [
                     0 => 1,
-                    1 => "Q"
+                    1 => "Q",
+                    2 => "0"
                 ]
             ]
         ];
@@ -281,90 +566,64 @@ final class GameManagerTest extends TestCase {
         $this->assertSame($expected, $_SESSION['board']);
     }
 
-    public function test_place_tile_on_space_where_another_tile_moved() {
+    public function test_place_tile_on_space_where_another_tile_moved_from() {
         $expected1 = [
             "0,0" => [
                 0 => [
                     0 => 0,
-                    1 => "Q"
+                    1 => "Q",
+                    2 => "0"
                 ]
             ],
             "1,0" => [
                 0 => [
                     0 => 1,
-                    1 => "Q"
+                    1 => "Q",
+                    2 => "0"
                 ]
             ],
             "1,1" => [
                 0 => [
                     0 => 1,
-                    1 => "B"
+                    1 => "B",
+                    2 => "0"
                 ]
             ],
             "-1,1" => [
                 0 => [
                     0 => 0,
-                    1 => "B"
+                    1 => "B",
+                    2 => "0"
                 ]
             ]
         ];
-
         $expected2 = [
             "0,0" => [
                 0 => [
                     0 => 0,
-                    1 => "Q"
+                    1 => "Q",
+                    2 => "0"
                 ]
             ],
             "1,0" => [
                 0 => [
                     0 => 1,
-                    1 => "Q"
+                    1 => "Q",
+                    2 => "0"
                 ]
             ],
             "-1,1" => [
                 0 => [
                     0 => 0,
-                    1 => "B"
+                    1 => "B",
+                    2 => "0"
                 ]
             ],
             "2,0" => [
                 0 => [
                     0 => 1,
-                    1 => "B"
-                ]
-            ]
-        ];
-
-        $expected3 = [
-            "0,0" => [
-                0 => [
-                    0 => 0,
-                    1 => "Q"
-                ]
-            ],
-            "1,0" => [
-                0 => [
-                    0 => 1,
-                    1 => "Q"
-                ]
-            ],
-            "-1,1" => [
-                0 => [
-                    0 => 0,
-                    1 => "B"
-                ]
-            ],
-            "2,0" => [
-                0 => [
-                    0 => 1,
-                    1 => "B"
-                ]
-            ],
-            "-1,0" => [
-                0 => [
-                    0 => 0,
-                    1 => "A"
+                    1 => "B",
+                    2 => "0"
                 ]
             ]
         ];
@@ -380,25 +639,29 @@ final class GameManagerTest extends TestCase {
             "0,0" => [
                 0 => [
                     0 => 0,
-                    1 => "Q"
+                    1 => "Q",
+                    2 => "0"
                 ]
             ],
             "1,0" => [
                 0 => [
                     0 => 1,
-                    1 => "Q"
+                    1 => "Q",
+                    2 => "0"
                 ]
             ],
             "1,1" => [
                 0 => [
                     0 => 1,
-                    1 => "B"
+                    1 => "B",
+                    2 => "0"
                 ]
             ],
             "-1,0" => [
                 0 => [
                     0 => 0,
-                    1 => "B"
+                    1 => "B",
+                    2 => "0"
                 ]
             ]
         ];
@@ -416,7 +679,9 @@ final class GameManagerTest extends TestCase {
         $_POST['to'] = "-1,0";
 
         $this->game_manager->play_insect($this->mysql_conn_stub);
-        $this->assertSame($expected3, $_SESSION['board']);
+        $this->assertArrayHasKey("-1,0", $_SESSION['board']);
+        $this->assertEquals("0", $_SESSION['board']["-1,0"][0][0]);
+        $this->assertEquals("A", $_SESSION['board']["-1,0"][0][1]);
     }
 
     public function test_player_white_must_play_queen() {
@@ -544,29 +809,37 @@ final class GameManagerTest extends TestCase {
             1 => ["Q" => 0, "B" => 1, "S" => 2, "A" => 3, "G" => 3]];
         $_SESSION['player'] = 0; //white
         $_SESSION['spider_moves'] = [];
+        $_SESSION['last_made_moves'] = [
+            0 => [],
+            1 => []
+        ];
         $_SESSION['board'] = [
             "0,0" => [
                 0 => [
                     0 => 0,
-                    1 => "Q"
+                    1 => "Q",
+                    2 => "0"
                 ]
             ],
             "1,0" => [
                 0 => [
                     0 => 1,
-                    1 => "Q"
+                    1 => "Q",
+                    2 => "0"
                 ]
             ],
             "-1,0" => [
                 0 => [
                     0 => 0,
-                    1 => "S"
+                    1 => "S",
+                    2 => "0"
                 ]
             ],
             "2,0" => [
                 0 => [
                     0 => 1,
-                    1 => "B"
+                    1 => "B",
+                    2 => "0"
                 ]
             ],
         ];
@@ -575,25 +848,29 @@ final class GameManagerTest extends TestCase {
             "0,0" => [
                 0 => [
                     0 => 0,
-                    1 => "Q"
+                    1 => "Q",
+                    2 => "0"
                 ]
             ],
             "1,0" => [
                 0 => [
                     0 => 1,
-                    1 => "Q"
+                    1 => "Q",
+                    2 => "0"
                 ]
             ],
             "0,-1" => [
                 0 => [
                     0 => 0,
-                    1 => "S"
+                    1 => "S",
+                    2 => "0"
                 ]
             ],
             "2,0" => [
                 0 => [
                     0 => 1,
-                    1 => "B"
+                    1 => "B",
+                    2 => "0"
                 ]
             ],
         ];
@@ -617,25 +894,29 @@ final class GameManagerTest extends TestCase {
             "0,0" => [
                 0 => [
                     0 => 0,
-                    1 => "Q"
+                    1 => "Q",
+                    2 => "0"
                 ]
             ],
             "1,0" => [
                 0 => [
                     0 => 1,
-                    1 => "Q"
+                    1 => "Q",
+                    2 => "0"
                 ]
             ],
             "1,-1" => [
                 0 => [
                     0 => 0,
-                    1 => "S"
+                    1 => "S",
+                    2 => "0"
                 ]
             ],
             "2,0" => [
                 0 => [
                     0 => 1,
-                    1 => "B"
+                    1 => "B",
+                    2 => "0"
                 ]
             ],
         ];
@@ -663,25 +944,29 @@ final class GameManagerTest extends TestCase {
             "0,0" => [
                 0 => [
                     0 => 0,
-                    1 => "Q"
+                    1 => "Q",
+                    2 => "0"
                 ]
             ],
             "1,0" => [
                 0 => [
                     0 => 1,
-                    1 => "Q"
+                    1 => "Q",
+                    2 => "0"
                 ]
             ],
             "2,-1" => [
                 0 => [
                     0 => 0,
-                    1 => "S"
+                    1 => "S",
+                    2 => "0"
                 ]
             ],
             "2,0" => [
                 0 => [
                     0 => 1,
-                    1 => "B"
+                    1 => "B",
+                    2 => "0"
                 ]
             ],
         ];

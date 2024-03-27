@@ -1,0 +1,105 @@
+version: "3"
+
+networks:
+  hive-network:
+    driver: bridge
+  jenkins-network:
+    driver: bridge
+
+volumes:
+  hive-db:
+  jenkins-data:
+  jenkins-docker-certs:
+  sonarqube_conf:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_bundled-plugins:
+
+services:
+  db:
+    build: ./app/db/
+    container_name: hive-db
+    volumes:
+      - hive-db:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: "hive"
+      MYSQL_ROOT_PASSWORD: password1234
+    ports:
+      - "3304:3306"
+    networks:
+      - hive-network
+
+  app:
+    build: ./app/
+    container_name: hive
+    ports:
+      - "8000:80"
+    networks:
+      - hive-network
+    depends_on:
+      - db
+
+  hive-ai:
+    build: ./hive-ai/
+    container_name: hive-ai
+    ports:
+      - '5000:5000'
+    networks:
+      - hive-network
+    depends_on:
+      - app
+
+  dind:
+    image: docker:19.03.7-dind
+    container_name: dind
+    restart: always
+    privileged: true
+    environment:
+      - DOCKER_TLS_CERTDIR=/certs
+    volumes:
+      - jenkins-data:/var/jenkins_home
+      - jenkins-docker-certs:/certs/client
+    ports:
+      - "2376:2376"
+    networks:
+      jenkins-network:
+        aliases:
+          - docker
+
+  jenkins:
+    build: ./app/jenkins
+    container_name: jenkins
+    restart: always
+    privileged: true
+    environment:
+      - DOCKER_HOST=tcp://docker:2376
+      - DOCKER_CERT_PATH=/certs/client
+      - DOCKER_TLS_VERIFY=1
+    volumes:
+      - jenkins-data:/var/jenkins_home
+      - jenkins-docker-certs:/certs/client:ro
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    networks:
+      - jenkins-network
+    depends_on:
+      - dind
+
+  sonarqube:
+    image: sonarqube:latest
+    container_name: sonarqube_hive
+    restart: always
+    volumes:
+      - sonarqube_conf:/opt/sonarqube/conf
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_bundled-plugins:/opt/sonarqube/lib/bundled-plugins
+    environment:
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+    ports:
+      - "9000:9000"
+    networks:
+      - jenkins-network
+    depends_on:
+      - jenkins
