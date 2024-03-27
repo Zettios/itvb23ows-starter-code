@@ -28,11 +28,10 @@ pipeline {
             }
         }
         stage('Execute PHPUnit Tests') {
-            agent { docker { image 'php:8.2-apache' } }
             steps {
                 script {
-                    // Run PHPUnit inside the Docker container
-                    sh "docker run --rm ${dockerImage.id} ./vendor/bin/phpunit"
+                    // Run PHPUnit tests
+                    sh "./vendor/bin/phpunit"
                 }
             }
         }
