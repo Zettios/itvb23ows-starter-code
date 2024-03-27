@@ -2,12 +2,9 @@ pipeline {
     agent any
     stages {
 	    stage('Setup') {
-	        agent { docker { image 'php:8.2-apache' } }
 	        steps {
-                script  {
-                    echo 'Setup'
-                }
-	        }
+                sh 'composer install'
+            }
         }
         stage('Quick start example test') {
             agent { docker { image 'php:8.2-apache' } }
