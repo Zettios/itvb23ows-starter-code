@@ -1,15 +1,14 @@
 pipeline {
     agent any
     stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
 	    stage('Setup') {
 	        steps {
                 sh 'composer install'
-            }
-        }
-        stage('Quick start example test') {
-            agent { docker { image 'php:8.2-apache' } }
-            steps {
-                sh 'php --version'
             }
         }
         stage('Execute SonarQube scan') {
