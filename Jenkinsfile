@@ -8,8 +8,8 @@ pipeline {
         }
 	    stage('Setup') {
 	        steps {
-                sh 'composer install'
-                sh 'composer require --dev phpunit/phpunit'
+	            sh 'php -v'
+                sh 'composer --version'
             }
         }
         stage('Execute SonarQube scan') {
