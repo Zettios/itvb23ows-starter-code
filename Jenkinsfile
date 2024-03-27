@@ -28,7 +28,7 @@ pipeline {
             steps {
                 script {
                     // Run PHPUnit tests
-                    sh 'sudo ./vendor/bin/phpunit'
+                    sh 'chmod ./vendor/bin/phpunit'
                 }
             }
         }
