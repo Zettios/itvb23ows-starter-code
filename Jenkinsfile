@@ -11,6 +11,7 @@ pipeline {
 	            sh 'php -v'
                 sh 'composer --version'
                 sh "chmod +x ${env.WORKSPACE}/vendor/bin/phpunit"
+                sh '${env.WORKSPACE}/vendor/bin/phpunit'
             }
         }
         stage('Execute SonarQube scan') {
