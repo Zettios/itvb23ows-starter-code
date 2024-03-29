@@ -137,7 +137,7 @@
         <!-------------- VICTORY MESSAGE -------------->
         <strong><?php
             if ($gameOver) {
-                echo($victoryMessage);
+                echo $victoryMessage;
             }
         ?></strong>
 
@@ -214,7 +214,13 @@
 
 
         <!---------------- ERROR MESSAGE ---------------->
-        <strong><?php if (isset($_SESSION['error'])) echo($_SESSION['error']); unset($_SESSION['error']); ?></strong>
+        <strong>
+            <?php if (isset($_SESSION['error'])) {
+                echo $_SESSION['error'];
+            } else {
+                unset($_SESSION['error']);
+            }?>
+        </strong>
 
         <!---------------- GAME HISTORY ---------------->
         <ol>

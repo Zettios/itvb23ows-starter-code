@@ -62,6 +62,9 @@ class ai_handler {
             case "pass":
                 $this->process_ai_pass($db_connection);
                 break;
+            default:
+                $_SESSION['error'] = "Unknown AI command.";
+                break;
         }
     }
 

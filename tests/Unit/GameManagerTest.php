@@ -8,6 +8,9 @@ require_once dirname(__DIR__) . '/../app/game_manager/game_manager.php';
 require_once dirname(__DIR__) . '/../app/database.php';
 
 final class GameManagerTest extends TestCase {
+    private string $WHITE_DEFAULT_MOVE_ID = "0s000";
+    private string $BLACK_DEFAULT_MOVE_ID = "1s111";
+
     private game_manager $game_manager;
     private hive_util $util;
 
@@ -214,10 +217,10 @@ final class GameManagerTest extends TestCase {
         ];
         $_SESSION['last_made_moves'] = [
             0 => [
-                0 => "0s000",
+                0 => $this->WHITE_DEFAULT_MOVE_ID,
             ],
             1 => [
-                0 => "1s111",
+                0 => $this->BLACK_DEFAULT_MOVE_ID,
             ]
         ];
 
@@ -327,20 +330,20 @@ final class GameManagerTest extends TestCase {
     public function test_draw_by_stalemate() {
         $_SESSION['last_made_moves'] = [
             0 => [
-                0 => "0s000",
-                1 => "0s000",
-                2 => "0s000",
-                3 => "0s000",
-                4 => "0s000",
-                5 => "0s000",
+                0 => $this->WHITE_DEFAULT_MOVE_ID,
+                1 => $this->WHITE_DEFAULT_MOVE_ID,
+                2 => $this->WHITE_DEFAULT_MOVE_ID,
+                3 => $this->WHITE_DEFAULT_MOVE_ID,
+                4 => $this->WHITE_DEFAULT_MOVE_ID,
+                5 => $this->WHITE_DEFAULT_MOVE_ID,
             ],
             1 => [
-                0 => "1s111",
-                1 => "1s111",
-                2 => "1s111",
-                3 => "1s111",
-                4 => "1s111",
-                5 => "1s111",
+                0 => $this->BLACK_DEFAULT_MOVE_ID,
+                1 => $this->BLACK_DEFAULT_MOVE_ID,
+                2 => $this->BLACK_DEFAULT_MOVE_ID,
+                3 => $this->BLACK_DEFAULT_MOVE_ID,
+                4 => $this->BLACK_DEFAULT_MOVE_ID,
+                5 => $this->BLACK_DEFAULT_MOVE_ID,
             ]
         ];
         $board = [
@@ -349,7 +352,7 @@ final class GameManagerTest extends TestCase {
                 0 => [
                     0 => 0,
                     1 => "Q",
-                    2 => "0s000"
+                    2 => $this->WHITE_DEFAULT_MOVE_ID
                 ]
             ],
             // Black queen to surround
@@ -357,7 +360,7 @@ final class GameManagerTest extends TestCase {
                 0 => [
                     0 => 1,
                     1 => "Q",
-                    2 => "1s111"
+                    2 => $this->BLACK_DEFAULT_MOVE_ID
                 ]
             ],
             "2,0" => [
@@ -377,20 +380,20 @@ final class GameManagerTest extends TestCase {
     public function test_stalemate_check_where_player_still_uses_another_tile() {
         $_SESSION['last_made_moves'] = [
             0 => [
-                0 => "0s000",
-                1 => "0s000",
+                0 => $this->WHITE_DEFAULT_MOVE_ID,
+                1 => $this->WHITE_DEFAULT_MOVE_ID,
                 2 => "0s001",
-                3 => "0s000",
-                4 => "0s000",
-                5 => "0s000",
+                3 => $this->WHITE_DEFAULT_MOVE_ID,
+                4 => $this->WHITE_DEFAULT_MOVE_ID,
+                5 => $this->WHITE_DEFAULT_MOVE_ID,
             ],
             1 => [
-                0 => "1s111",
-                1 => "1s111",
-                2 => "1s111",
-                3 => "1s111",
-                4 => "1s111",
-                5 => "1s111",
+                0 => $this->BLACK_DEFAULT_MOVE_ID,
+                1 => $this->BLACK_DEFAULT_MOVE_ID,
+                2 => $this->BLACK_DEFAULT_MOVE_ID,
+                3 => $this->BLACK_DEFAULT_MOVE_ID,
+                4 => $this->BLACK_DEFAULT_MOVE_ID,
+                5 => $this->BLACK_DEFAULT_MOVE_ID,
             ]
         ];
 

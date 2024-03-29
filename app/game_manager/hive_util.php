@@ -12,16 +12,24 @@ class hive_util {
         $to = explode(',', $to);
 
         // Checks bottom right & top left
-        if ($to[0] == $from[0] && abs($to[1] - $from[1]) == 1) return true;
+        if ($to[0] == $from[0] && abs($to[1] - $from[1]) == 1) {
+            return true;
+        }
 
         // Checks right & left
-        if ($to[1] == $from[1] && abs($to[0] - $from[0]) == 1) return true;
+        if ($to[1] == $from[1] && abs($to[0] - $from[0]) == 1) {
+            return true;
+        }
 
         // Check the bottom left position
-        if ($to[0] - $GLOBALS['OFFSETS'][4][0] == $from[0] && $to[1] - $GLOBALS['OFFSETS'][4][1] == $from[1]) return true;
+        if ($to[0] - $GLOBALS['OFFSETS'][4][0] == $from[0] && $to[1] - $GLOBALS['OFFSETS'][4][1] == $from[1]) {
+            return true;
+        }
 
         // Check the top right position
-        if ($to[0] - $GLOBALS['OFFSETS'][5][0] == $from[0] && $to[1] - $GLOBALS['OFFSETS'][5][1] == $from[1]) return true;
+        if ($to[0] - $GLOBALS['OFFSETS'][5][0] == $from[0] && $to[1] - $GLOBALS['OFFSETS'][5][1] == $from[1]) {
+            return true;
+        }
 
         return false;
     }

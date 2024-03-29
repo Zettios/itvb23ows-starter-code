@@ -98,6 +98,9 @@ class game_manager {
                         case "G":
                             $grasshopperPositions = array_merge($grasshopperPositions, $grasshopper->calculate_move_position($boardPosition, $board));
                             break;
+                        default:
+                            $_SESSION['error'] = "Unknown insect type.";
+                            break;
                     }
 
                     if (isset($board[$boardPosition])) {

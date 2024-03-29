@@ -1,7 +1,7 @@
 <?php
 class database {
     function connect_to_database(): mysqli {
-        return new mysqli('db', 'root', 'password1234', 'hive');
+        return new mysqli('db', 'root', '7cfNu1k77xeI2MQ6YFQ8g6rMsZ9NI2I', 'hive');
     }
 
     function insert_player_move($db_connection, $type, $game_id, $from, $to, $last_move, $game_state) {

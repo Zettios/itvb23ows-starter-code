@@ -23,7 +23,7 @@ services:
       - hive-db:/var/lib/mysql
     environment:
       MYSQL_DATABASE: "hive"
-      MYSQL_ROOT_PASSWORD: password1234
+      MYSQL_ROOT_PASSWORD: 7cfNu1k77xeI2MQ6YFQ8g6rMsZ9NI2I
     ports:
       - "3304:3306"
     networks:
