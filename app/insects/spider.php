@@ -33,8 +33,4 @@
             }
             return $movePositions;
         }
-
-        public function move_insect($from, $to, $board) {
-            echo "Moving spider";
-        }
     }

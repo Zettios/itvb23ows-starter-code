@@ -38,7 +38,6 @@ class game_manager {
 
     function get_play_and_move_positions($board, $player): array {
         $playPositions = [];
-        $movePositions = [];
 
         $beetle = new beetle($this->util);
         $beetlePositions = [];
@@ -196,7 +195,6 @@ class game_manager {
             } else {
                 $tile = array_pop($board[$from]);
 
-                //Checks for a hive split
                 if (!$this->util->has_move_neighbour($from, $to, $board)) {
                     $_SESSION['error'] = "Move would split hive";
                 } else {
@@ -225,9 +223,13 @@ class game_manager {
                             $_SESSION['error'] = 'Tile must move';
                         } elseif (isset($board[$to]) && $tile[1] != "B") {
                             $_SESSION['error'] = 'Tile not empty';
-                        } elseif ($tile[1] != "G") {
+                        } elseif ($tile[1] == "Q" || $tile[1] == "B" || $tile[1] == "S") {
                             if (!$this->util->can_tile_slide($board, $from, $to)) {
                                 $_SESSION['error'] = 'Tile must slide';
+                            }
+                        } elseif ($tile[1] == "G") {
+                            if (!$this->util->can_hop($board, $from, $to)) {
+                                $_SESSION['error'] = 'Invalid position for grasshopper';
                             }
                         }
                     }

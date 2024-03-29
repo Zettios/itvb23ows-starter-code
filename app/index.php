@@ -75,7 +75,7 @@
     }
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
         <title>Hive</title>
         <link rel="stylesheet" href="styling.css">

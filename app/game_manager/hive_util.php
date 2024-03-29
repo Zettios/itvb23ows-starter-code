@@ -109,6 +109,39 @@ class hive_util {
         return min($min1, $min2) <= max($max1, $max2);
     }
 
+    function can_hop($board, $from, $to): bool {
+        if ($this->is_neighbour($from, $to)) {
+            return false;
+        }
+
+        $fromExplode = explode(',', $from);
+        $validHop = false;
+        foreach ($GLOBALS['OFFSETS'] as $pq) {
+            $p = $fromExplode[0] + $pq[0];
+            $q = $fromExplode[1] + $pq[1];
+
+            $tempP = $p;
+            $tempQ = $q;
+
+
+            $keepSearching = true;
+            while ($keepSearching) {
+                $tempP = $tempP + $pq[0];
+                $tempQ = $tempQ + $pq[1];
+
+                $key = $tempP.",".$tempQ;
+                if (!array_key_exists($key, $board)) {
+                    if ($key == $to) {
+                        $validHop = true;
+                    }
+                    $keepSearching = false;
+                }
+            }
+        }
+
+        return $validHop;
+    }
+
     function generate_tile_id($player, $piece): string {
         return $player.$piece.rand(1000000, 9999999);
     }
@@ -127,10 +160,6 @@ class hive_util {
         if ($type == "play") {
             $hand[$player][$moveFrom]++;
             unset($board[$moveTo]);
-        } else if ($type == "move") {
-            if ($board[$moveFrom][count($board[$moveFrom])-1][1] == "S") {
-                print_r($_SESSION['spider_moves']);
-            }
         }
 
         $_SESSION['hand'] = $hand;

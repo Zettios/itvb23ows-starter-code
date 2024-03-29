@@ -8,8 +8,8 @@ require_once dirname(__DIR__) . '/../app/game_manager/game_manager.php';
 require_once dirname(__DIR__) . '/../app/database.php';
 
 final class GameManagerTest extends TestCase {
-    private string $WHITE_DEFAULT_MOVE_ID = "0s000";
-    private string $BLACK_DEFAULT_MOVE_ID = "1s111";
+    private string $white_move_id = "0s000";
+    private string $black_move_id = "1s111";
 
     private game_manager $game_manager;
     private hive_util $util;
@@ -217,10 +217,10 @@ final class GameManagerTest extends TestCase {
         ];
         $_SESSION['last_made_moves'] = [
             0 => [
-                0 => $this->WHITE_DEFAULT_MOVE_ID,
+                0 => $this->white_move_id,
             ],
             1 => [
-                0 => $this->BLACK_DEFAULT_MOVE_ID,
+                0 => $this->black_move_id,
             ]
         ];
 
@@ -330,20 +330,20 @@ final class GameManagerTest extends TestCase {
     public function test_draw_by_stalemate() {
         $_SESSION['last_made_moves'] = [
             0 => [
-                0 => $this->WHITE_DEFAULT_MOVE_ID,
-                1 => $this->WHITE_DEFAULT_MOVE_ID,
-                2 => $this->WHITE_DEFAULT_MOVE_ID,
-                3 => $this->WHITE_DEFAULT_MOVE_ID,
-                4 => $this->WHITE_DEFAULT_MOVE_ID,
-                5 => $this->WHITE_DEFAULT_MOVE_ID,
+                0 => $this->white_move_id,
+                1 => $this->white_move_id,
+                2 => $this->white_move_id,
+                3 => $this->white_move_id,
+                4 => $this->white_move_id,
+                5 => $this->white_move_id,
             ],
             1 => [
-                0 => $this->BLACK_DEFAULT_MOVE_ID,
-                1 => $this->BLACK_DEFAULT_MOVE_ID,
-                2 => $this->BLACK_DEFAULT_MOVE_ID,
-                3 => $this->BLACK_DEFAULT_MOVE_ID,
-                4 => $this->BLACK_DEFAULT_MOVE_ID,
-                5 => $this->BLACK_DEFAULT_MOVE_ID,
+                0 => $this->black_move_id,
+                1 => $this->black_move_id,
+                2 => $this->black_move_id,
+                3 => $this->black_move_id,
+                4 => $this->black_move_id,
+                5 => $this->black_move_id,
             ]
         ];
         $board = [
@@ -352,7 +352,7 @@ final class GameManagerTest extends TestCase {
                 0 => [
                     0 => 0,
                     1 => "Q",
-                    2 => $this->WHITE_DEFAULT_MOVE_ID
+                    2 => $this->white_move_id
                 ]
             ],
             // Black queen to surround
@@ -360,7 +360,7 @@ final class GameManagerTest extends TestCase {
                 0 => [
                     0 => 1,
                     1 => "Q",
-                    2 => $this->BLACK_DEFAULT_MOVE_ID
+                    2 => $this->black_move_id
                 ]
             ],
             "2,0" => [
@@ -380,20 +380,20 @@ final class GameManagerTest extends TestCase {
     public function test_stalemate_check_where_player_still_uses_another_tile() {
         $_SESSION['last_made_moves'] = [
             0 => [
-                0 => $this->WHITE_DEFAULT_MOVE_ID,
-                1 => $this->WHITE_DEFAULT_MOVE_ID,
+                0 => $this->white_move_id,
+                1 => $this->white_move_id,
                 2 => "0s001",
-                3 => $this->WHITE_DEFAULT_MOVE_ID,
-                4 => $this->WHITE_DEFAULT_MOVE_ID,
-                5 => $this->WHITE_DEFAULT_MOVE_ID,
+                3 => $this->white_move_id,
+                4 => $this->white_move_id,
+                5 => $this->white_move_id,
             ],
             1 => [
-                0 => $this->BLACK_DEFAULT_MOVE_ID,
-                1 => $this->BLACK_DEFAULT_MOVE_ID,
-                2 => $this->BLACK_DEFAULT_MOVE_ID,
-                3 => $this->BLACK_DEFAULT_MOVE_ID,
-                4 => $this->BLACK_DEFAULT_MOVE_ID,
-                5 => $this->BLACK_DEFAULT_MOVE_ID,
+                0 => $this->black_move_id,
+                1 => $this->black_move_id,
+                2 => $this->black_move_id,
+                3 => $this->black_move_id,
+                4 => $this->black_move_id,
+                5 => $this->black_move_id,
             ]
         ];
 
@@ -435,7 +435,7 @@ final class GameManagerTest extends TestCase {
                 ]
             ],
         ];
-        $expectedPlayer = 0;
+
         $_SESSION['last_move'] = -1;
         $_SESSION['hand'] = [0 => ["Q" => 0, "B" => 2, "S" => 3, "A" => 3, "G" => 3],
                              1 => ["Q" => 1, "B" => 2, "S" => 3, "A" => 3, "G" => 3]];
@@ -457,7 +457,6 @@ final class GameManagerTest extends TestCase {
 
         $this->game_manager->undo_move($_SESSION['last_move'], $this->mysql_conn_stub);
         $this->assertSame($expected, $_SESSION['board']);
-        $this->assertEquals($expectedPlayer, $expectedPlayer);
     }
 
     public function test_undo_move() {
@@ -475,7 +474,7 @@ final class GameManagerTest extends TestCase {
                 ]
             ],
         ];
-        $expectedPlayer = 0;
+
         $_SESSION['last_move'] = -1;
         $_SESSION['hand'] = [];
         $_SESSION['board'] = $expected;
@@ -495,7 +494,6 @@ final class GameManagerTest extends TestCase {
 
         $this->game_manager->undo_move($_SESSION['last_move'], $this->mysql_conn_stub);
         $this->assertSame($expected, $_SESSION['board']);
-        $this->assertEquals($expectedPlayer, $expectedPlayer);
     }
 
     public function test_calculate_correct_play_and_move_values() {
@@ -802,6 +800,374 @@ final class GameManagerTest extends TestCase {
 
         $this->game_manager->play_insect(null);
         self::assertEquals($expected, $_SESSION['error']);
+    }
+
+    public function test_move_player_moves_ant() {
+        $_POST['from'] = "0,-1";
+        $_POST['to'] = "1,2";
+        $_SESSION['game_id'] = 0;
+        $_SESSION['last_move'] = 0;
+        $_SESSION['hand'] = [0 => ["Q" => 0, "B" => 2, "S" => 2, "A" => 2, "G" => 3],
+                                1 => ["Q" => 0, "B" => 1, "S" => 2, "A" => 3, "G" => 3]];
+        $_SESSION['player'] = 0; //white
+        $_SESSION['spider_moves'] = [];
+        $_SESSION['last_made_moves'] = [
+            0 => [],
+            1 => []
+        ];
+        $_SESSION['board'] = [
+            "0,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "Q",
+                    2 => $this->white_move_id
+                ]
+            ],
+            "0,1" => [
+                0 => [
+                    0 => 1,
+                    1 => "Q",
+                    2 => $this->black_move_id
+                ]
+            ],
+            "0,-1" => [
+                0 => [
+                    0 => 0,
+                    1 => "A",
+                    2 => $this->white_move_id
+                ]
+            ],
+            "0,2" => [
+                0 => [
+                    0 => 1,
+                    1 => "B",
+                    2 => $this->black_move_id
+                ]
+            ],
+        ];
+
+        $expectedBoard = [
+            "0,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "Q",
+                    2 => $this->white_move_id
+                ]
+            ],
+            "0,1" => [
+                0 => [
+                    0 => 1,
+                    1 => "Q",
+                    2 => $this->black_move_id
+                ]
+            ],
+            "0,2" => [
+                0 => [
+                    0 => 1,
+                    1 => "B",
+                    2 => $this->black_move_id
+                ]
+            ],
+            "1,2" => [
+                0 => [
+                    0 => 0,
+                    1 => "A",
+                    2 => $this->white_move_id
+                ]
+            ],
+        ];
+
+
+        $this->game_manager->move_insect($this->mysql_conn_stub);
+        $this->assertSame($expectedBoard, $_SESSION['board']);
+    }
+
+    public function test_move_player_moves_grasshopper_to_valid_bottom_right_space() {
+        $_POST['from'] = "0,-1";
+        $_POST['to'] = "0,3";
+        $_SESSION['game_id'] = 0;
+        $_SESSION['last_move'] = 0;
+        $_SESSION['hand'] = [0 => ["Q" => 0, "B" => 2, "S" => 2, "A" => 3, "G" => 2],
+            1 => ["Q" => 0, "B" => 1, "S" => 2, "A" => 3, "G" => 3]];
+        $_SESSION['player'] = 0; //white
+        $_SESSION['spider_moves'] = [];
+        $_SESSION['last_made_moves'] = [
+            0 => [],
+            1 => []
+        ];
+        $_SESSION['board'] = [
+            "0,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "Q",
+                    2 => $this->white_move_id
+                ]
+            ],
+            "0,1" => [
+                0 => [
+                    0 => 1,
+                    1 => "Q",
+                    2 => $this->black_move_id
+                ]
+            ],
+            "0,-1" => [
+                0 => [
+                    0 => 0,
+                    1 => "G",
+                    2 => $this->white_move_id
+                ]
+            ],
+            "0,2" => [
+                0 => [
+                    0 => 1,
+                    1 => "B",
+                    2 => $this->black_move_id
+                ]
+            ],
+        ];
+
+        $expectedBoard = [
+            "0,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "Q",
+                    2 => $this->white_move_id
+                ]
+            ],
+            "0,1" => [
+                0 => [
+                    0 => 1,
+                    1 => "Q",
+                    2 => $this->black_move_id
+                ]
+            ],
+            "0,2" => [
+                0 => [
+                    0 => 1,
+                    1 => "B",
+                    2 => $this->black_move_id
+                ]
+            ],
+            "0,3" => [
+                0 => [
+                    0 => 0,
+                    1 => "G",
+                    2 => $this->white_move_id
+                ]
+            ],
+        ];
+
+
+        $this->game_manager->move_insect($this->mysql_conn_stub);
+        $this->assertSame($expectedBoard, $_SESSION['board']);
+    }
+
+    public function test_move_player_moves_grasshopper_to_valid_right_space() {
+        $_POST['from'] = "0,0";
+        $_POST['to'] = "4,0";
+        $_SESSION['game_id'] = 0;
+        $_SESSION['last_move'] = 0;
+        $_SESSION['hand'] = [0 => ["Q" => 0, "B" => 2, "S" => 2, "A" => 3, "G" => 2],
+            1 => ["Q" => 0, "B" => 1, "S" => 2, "A" => 3, "G" => 3]];
+        $_SESSION['player'] = 0; //white
+        $_SESSION['spider_moves'] = [];
+        $_SESSION['last_made_moves'] = [
+            0 => [],
+            1 => []
+        ];
+        $_SESSION['board'] = [
+            "0,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "G",
+                    2 => $this->white_move_id
+                ]
+            ],
+            "1,0" => [
+                0 => [
+                    0 => 1,
+                    1 => "Q",
+                    2 => $this->black_move_id
+                ]
+            ],
+            "2,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "Q",
+                    2 => $this->white_move_id
+                ]
+            ],
+            "3,0" => [
+                0 => [
+                    0 => 1,
+                    1 => "B",
+                    2 => $this->black_move_id
+                ]
+            ],
+        ];
+
+        $expectedBoard = [
+            "1,0" => [
+                0 => [
+                    0 => 1,
+                    1 => "Q",
+                    2 => $this->black_move_id
+                ]
+            ],
+            "2,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "Q",
+                    2 => $this->white_move_id
+                ]
+            ],
+            "3,0" => [
+                0 => [
+                    0 => 1,
+                    1 => "B",
+                    2 => $this->black_move_id
+                ]
+            ],
+            "4,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "G",
+                    2 => $this->white_move_id
+                ]
+            ]
+        ];
+
+
+        $this->game_manager->move_insect($this->mysql_conn_stub);
+        $this->assertSame($expectedBoard, $_SESSION['board']);
+    }
+
+    public function test_move_player_moves_grasshopper_to_valid_top_right_space() {
+        $_POST['from'] = "-1,1";
+        $_POST['to'] = "3,-3";
+        $_SESSION['game_id'] = 0;
+        $_SESSION['last_move'] = 0;
+        $_SESSION['hand'] = [0 => ["Q" => 0, "B" => 2, "S" => 2, "A" => 3, "G" => 2],
+                        1 => ["Q" => 0, "B" => 1, "S" => 2, "A" => 3, "G" => 3]];
+        $_SESSION['player'] = 0; //white
+        $_SESSION['spider_moves'] = [];
+        $_SESSION['last_made_moves'] = [
+            0 => [],
+            1 => []
+        ];
+        $_SESSION['board'] = [
+            "0,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "Q",
+                    2 => $this->white_move_id
+                ]
+            ],
+            "1,-1" => [
+                0 => [
+                    0 => 1,
+                    1 => "Q",
+                    2 => $this->black_move_id
+                ]
+            ],
+            "-1,1" => [
+                0 => [
+                    0 => 0,
+                    1 => "G",
+                    2 => $this->white_move_id
+                ]
+            ],
+            "2,-2" => [
+                0 => [
+                    0 => 1,
+                    1 => "B",
+                    2 => $this->black_move_id
+                ]
+            ],
+        ];
+
+        $expectedBoard = [
+            "0,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "Q",
+                    2 => $this->white_move_id
+                ]
+            ],
+            "1,-1" => [
+                0 => [
+                    0 => 1,
+                    1 => "Q",
+                    2 => $this->black_move_id
+                ]
+            ],
+            "2,-2" => [
+                0 => [
+                    0 => 1,
+                    1 => "B",
+                    2 => $this->black_move_id
+                ]
+            ],
+            "3,-3" => [
+                0 => [
+                    0 => 0,
+                    1 => "G",
+                    2 => $this->white_move_id
+                ]
+            ],
+        ];
+
+
+        $this->game_manager->move_insect($this->mysql_conn_stub);
+        $this->assertSame($expectedBoard, $_SESSION['board']);
+    }
+
+    public function test_move_player_moves_grasshopper_to_invalid_space() {
+        $_POST['from'] = "0,-1";
+        $_POST['to'] = "1,2";
+        $_SESSION['game_id'] = 0;
+        $_SESSION['last_move'] = 0;
+        $_SESSION['hand'] = [0 => ["Q" => 0, "B" => 2, "S" => 2, "A" => 3, "G" => 2],
+                             1 => ["Q" => 0, "B" => 1, "S" => 2, "A" => 3, "G" => 3]];
+        $_SESSION['player'] = 0; //white
+        $_SESSION['spider_moves'] = [];
+        $_SESSION['last_made_moves'] = [
+            0 => [],
+            1 => []
+        ];
+        $_SESSION['board'] = [
+            "0,0" => [
+                0 => [
+                    0 => 0,
+                    1 => "Q",
+                    2 => $this->white_move_id
+                ]
+            ],
+            "0,1" => [
+                0 => [
+                    0 => 1,
+                    1 => "Q",
+                    2 => $this->black_move_id
+                ]
+            ],
+            "0,-1" => [
+                0 => [
+                    0 => 0,
+                    1 => "G",
+                    2 => $this->white_move_id
+                ]
+            ],
+            "0,2" => [
+                0 => [
+                    0 => 1,
+                    1 => "B",
+                    2 => $this->black_move_id
+                ]
+            ],
+        ];
+
+        $this->game_manager->move_insect($this->mysql_conn_stub);
+        $this->assertEquals("Invalid position for grasshopper", $_SESSION['error']);
     }
 
     public function test_move_spider_to_three_spaces() {
