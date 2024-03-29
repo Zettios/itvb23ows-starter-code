@@ -29,7 +29,7 @@ pipeline {
             steps {
                 script {
                     // Run PHPUnit tests
-                    sh '${env.WORKSPACE}vendor/bin/phpunit'
+                    sh '${env.WORKSPACE}/vendor/bin/phpunit'
                 }
             }
         }
