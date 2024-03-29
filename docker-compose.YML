@@ -77,7 +77,7 @@ services:
       - DOCKER_TLS_VERIFY=1
     volumes:
       - jenkins-data:/var/jenkins_home
-      - jenkins-docker-certs:/certs/client:ro
+      - jenkins-docker-certs:/certs/client
     ports:
       - "8080:8080"
       - "50000:50000"
