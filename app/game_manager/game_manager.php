@@ -231,6 +231,11 @@ class game_manager {
                             if (!$this->util->can_hop($board, $from, $to)) {
                                 $_SESSION['error'] = 'Invalid position for grasshopper';
                             }
+                        } elseif ($tile[1] == "A") {
+                            $ant = new antSoldier($this->util);
+                            if (!in_array($to, $ant->calculate_move_position($from, $board))) {
+                                $_SESSION['error'] = 'Invalid position for ant';
+                            }
                         }
                     }
                 }
