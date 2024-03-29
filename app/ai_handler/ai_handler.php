@@ -53,11 +53,9 @@ class ai_handler {
         switch ($type_action) {
             case "play":
                 $this->process_ai_play($ai_action[1], $ai_action[2], $db_connection);
-                $this->echo_ai_play($ai_action);
                 break;
             case "move":
                 $this->process_ai_move($ai_action[1], $ai_action[2], $db_connection);
-                $this->echo_ai_move($ai_action);
                 break;
             case "pass":
                 $this->process_ai_pass($db_connection);
@@ -82,17 +80,5 @@ class ai_handler {
 
     function process_ai_pass($db_connection) {
         $this->game_manager->pass_turn($db_connection);
-    }
-
-    function echo_ai_play($ai_action) {
-        echo "<pre>";
-        echo "The AI played ".$ai_action[1]." on position: ".$ai_action[2];
-        echo "</pre>";
-    }
-
-    function echo_ai_move($ai_action) {
-        echo "<pre>";
-        echo "The AI moved ".$ai_action[1]." to position: ".$ai_action[2];
-        echo "</pre>";
     }
 }
