@@ -341,7 +341,6 @@ class game_manager {
             return false;
         }
 
-        print_r($_SESSION['last_made_moves']);
         $prevWhiteId = $_SESSION['last_made_moves'][0][0];
         $whiteSameIdCounter = 0;
         $prevBlackId = $_SESSION['last_made_moves'][1][0];

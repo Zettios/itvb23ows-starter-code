@@ -18,6 +18,7 @@ final class GameManagerTest extends TestCase {
      * @throws \PHPUnit\Framework\MockObject\Exception
      */
     protected function setUp(): void {
+        $_SESSION['ai_game'] = false;
         $this->util = new hive_util();
 
         $this->database_stub = $this->createStub(database::class);
