@@ -10,7 +10,7 @@ pipeline {
 	        steps {
 	            sh 'php -v'
                 sh 'composer --version'
-                sh 'ls -l ${env.WORKSPACE}'
+                sh '${env.WORKSPACE}'
                 sh "chmod +x /var/jenkins_home/workspace/Hive_pipeline_jenkins-fix/vendor/bin/phpunit"
             }
         }
