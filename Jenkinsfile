@@ -13,7 +13,9 @@ pipeline {
                 sh 'whoami'
                 sh 'id'
                 sh 'ls -l /var/jenkins_home'
-                sh 'ls -l /vendor/bin/phpunit'
+                sh 'ls -l /var/jenkins_home/workspace/Hive_pipeline_jenkins-fix/vendor/bin'
+                sh 'ls -l /var/jenkins_home/workspace/Hive_pipeline_jenkins-fix/vendor/bin/phpunit'
+                sh 'ls -l /var/jenkins_home/workspace/Hive_pipeline_jenkins-fix@tmp/vendor/bin/phpunit'
             }
         }
         stage('Execute SonarQube scan') {
