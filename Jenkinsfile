@@ -15,7 +15,7 @@ pipeline {
                 sh 'ls -l /var/jenkins_home'
                 sh 'ls -l /var/jenkins_home/workspace/Hive_pipeline_jenkins-fix/vendor/bin'
                 sh 'ls -l /var/jenkins_home/workspace/Hive_pipeline_jenkins-fix/vendor/bin/phpunit'
-                sh 'ls -l /var/jenkins_home/workspace/Hive_pipeline_jenkins-fix@tmp/vendor/bin/phpunit'
+                sh "chmod +x /var/jenkins_home/workspace/Hive_pipeline_jenkins-fix/vendor/bin/phpunit"
             }
         }
         stage('Execute SonarQube scan') {
@@ -34,7 +34,7 @@ pipeline {
             steps {
                 script {
                     // Run PHPUnit tests
-                    sh './vendor/bin/phpunit'
+                    sh '/var/jenkins_home/workspace/Hive_pipeline_jenkins-fix/vendor/bin/phpunit'
                 }
             }
         }
